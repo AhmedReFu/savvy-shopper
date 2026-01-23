@@ -1,20 +1,37 @@
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import "./global.css";
+import { AuthStackParamList } from './src/Navigation/types';
+import AuthScreen from './src/screens/Auth_Screen/AuthScreen';
+import OtpAuth from './src/screens/Auth_Screen/OtpAuth';
+import SignIn from './src/screens/Auth_Screen/SignIn';
+import SignUp from './src/screens/Auth_Screen/SignUp';
+import WelcomeScreen from './src/screens/Home/WelcomeScreen';
+
+const Stack = createNativeStackNavigator<AuthStackParamList>();
+
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='Welcome'>
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="AuthScreen" component={AuthScreen} />
+      <Stack.Screen name="SignIn" component={SignIn} options={{ animation: "slide_from_left" }} />
+      <Stack.Screen name="SignUp" component={SignUp} options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="OtpAuth" component={OtpAuth} options={{ animation: "slide_from_right" }} />
+    </Stack.Navigator>
+  );
+} 
+
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+
+      <StatusBar style='auto' />
+      <AuthStack />
+    </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
