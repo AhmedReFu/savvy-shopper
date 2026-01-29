@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import BackButton from "./BackButton";
 
 const ComponentWrapper = ({
-    bg_color = "bg-red-500",
+    // bg_color = "bg-red-500",
     title = "Add Expense",
     headerComponent,
     children,
@@ -14,12 +14,12 @@ const ComponentWrapper = ({
 }:any
 ) => {
     return (
-        <SafeAreaView className={`flex-1 ${bg_color}`}>
+        <SafeAreaView className={`flex-1 `}>
             {headerComponent ? headerComponent() :
                 <View className="px-5 pb-3">
                     <AppHeader
                         left={() => <BackButton />}
-                        middle={() => <Text className="text-white font-archivo-semi-bold text-2xl">{title}</Text>}
+                        middle={() => <Text className="text-[#2D2D2D] font-archivo-semi-bold text-2xl">{title}</Text>}
                     />
                 </View>
             }

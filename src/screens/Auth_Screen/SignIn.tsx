@@ -1,4 +1,3 @@
-
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,7 +34,7 @@ const SignIn = () => {
                         resizeMode="contain"
                     />
                 </View>
-                <View className=' px-5'>
+                <View className=' px-5' style={styles.box}>
                     <Text className='text-3xl font-bold'>Welcome to DEALNUX!</Text>
                     <Text className='text-xl text-[#636F85] my-4'>Sign in to track prices and save money. </Text>
                     <Text style={styles.label}>Email address </Text>
@@ -85,8 +84,8 @@ const SignIn = () => {
                                 Remember Me
                             </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity>
-                            <Text style={styles.forgotPassword}>Forgot Password ?</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate("ResetPassword")}>
+                            <Text style={styles.forgotPassword}>Forgot Password</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -127,7 +126,9 @@ const SignIn = () => {
 export default SignIn;
 
 const styles = StyleSheet.create({
-
+    box: {
+        paddingHorizontal: 20,
+    },
 
     logoContainer: {
         alignItems: 'center',

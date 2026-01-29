@@ -24,7 +24,7 @@ const { width, height } = Dimensions.get('window');
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
-const OtpAuth = () => {
+const OtpResetPassword = () => {
     const navigation = useNavigation<NavigationProp<AuthNavProp>>();
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -266,7 +266,7 @@ const OtpAuth = () => {
                                                 />
                                             );
                                         })}
-                                    </View> 
+                                    </View>
 
 
                                 </View>
@@ -279,7 +279,7 @@ const OtpAuth = () => {
     );
 };
 
-export default OtpAuth;
+export default OtpResetPassword;
 
 const styles = StyleSheet.create({
     logoContainer: {

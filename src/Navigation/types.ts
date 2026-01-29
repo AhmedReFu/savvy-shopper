@@ -4,4 +4,7 @@ export type AuthStackParamList = {
   Welcome: undefined;
   AuthScreen: undefined;
   OtpAuth: undefined;
+  ProfileSetup: undefined;
+  ResetPassword: undefined;
+  OtpResetPassword: undefined;
 };
