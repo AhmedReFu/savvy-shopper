@@ -25,7 +25,7 @@ const { width, height } = Dimensions.get('window');
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const OtpResetPassword = () => {
-    const navigation = useNavigation<NavigationProp<AuthNavProp>>();
+    const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [code, setCode] = useState<string[]>(['', '', '', '']);
@@ -203,8 +203,9 @@ const OtpResetPassword = () => {
 
                     <TouchableOpacity
                         style={styles.mainButton}
-                        onPress={handleVerifyPress}
+                        onPress={() => navigation.navigate("CreateNewPassword")}
                         activeOpacity={0.9}
+
                     >
                         <Text style={styles.mainButtonText}>
                             {isVerifying ? 'Verifying...' : 'Verify OTP'}
@@ -214,67 +215,7 @@ const OtpResetPassword = () => {
             </View>
 
             {/* ✅ Real Blur Modal (iOS + Android) */}
-            <Modal
-                transparent={true}
-                animationType="fade"
-                visible={showSuccessModal}
-                onRequestClose={() => setShowSuccessModal(false)}
-            >
-                <View style={StyleSheet.absoluteFill}>
-                    {/* Blur */}
-                    <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
 
-                    {/* Extra dim layer to make Android look closer to iOS */}
-                    <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.8)]'>
-
-                        {/* Content */}
-                        <View className="flex-1 justify-center items-center px-10">
-                            <View className="w-full max-w-[400px]">
-                                <View className="bg-white rounded-3xl p-10 items-center shadow-2xl">
-                                    <View className="mt-6">
-                                        <Image source={Images.Success} resizeMode="contain" />
-                                    </View>
-
-                                    <Text className="text-3xl font-bold text-center mt-8 mb-8">
-                                        Successful!
-                                    </Text>
-
-                                    <Text className="text-xl text-[#636F85] text-center mb-8 leading-6">
-                                        Your registration was completed{'\n'}successfully
-                                    </Text>
-
-                                    {/* Spinner */}
-                                    <View className="w-16 h-16 my-8 items-center justify-center">
-                                        {spinnerDots.map((dot, index) => {
-                                            const angle = (dot.angle + spinnerRotation) * (Math.PI / 180);
-                                            const radius = 20;
-                                            const x = Math.cos(angle) * radius;
-                                            const y = Math.sin(angle) * radius;
-
-                                            return (
-                                                <View
-                                                    key={index}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        width: dot.size,
-                                                        height: dot.size,
-                                                        borderRadius: dot.size / 2,
-                                                        backgroundColor: '#2355B6',
-                                                        opacity: dot.opacity,
-                                                        transform: [{ translateX: x }, { translateY: y }],
-                                                    }}
-                                                />
-                                            );
-                                        })}
-                                    </View>
-
-
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
         </SafeAreaView>
     );
 };
@@ -318,7 +259,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingVertical: 18,
         alignItems: 'center',
-        marginTop: 24,
+        marginTop: 56,
     },
     mainButtonText: {
         fontSize: 16,

@@ -41,7 +41,7 @@ const ResetPassword = () => {
                       <MaterialIcons name="email" size={24} color="#334155" />
                       <TextInput
                           style={styles.input}
-                          placeholder="Your email ex: yourmail@gamil.com"
+                          placeholder="demo@gmail.com"
                           placeholderTextColor="#A0A0A0"
                           value={email}
                           onChangeText={setEmail}

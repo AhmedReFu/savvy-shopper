@@ -89,7 +89,7 @@ const SignIn = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.mainButton}>
+                    <TouchableOpacity style={styles.mainButton} onPress={() => navigation.navigate("MainTabs")}>
                         <Text style={styles.mainButtonText}>Sign In</Text>
                     </TouchableOpacity>
 

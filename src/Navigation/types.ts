@@ -7,4 +7,10 @@ export type AuthStackParamList = {
   ProfileSetup: undefined;
   ResetPassword: undefined;
   OtpResetPassword: undefined;
+  CreateNewPassword: undefined;
+  Cart: undefined;
+  MainTabs: undefined;
+  Notification: undefined;
+  SearchProduct: undefined;
+  ProductDetails: undefined;
 };
