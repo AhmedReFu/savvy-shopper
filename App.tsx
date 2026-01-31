@@ -17,6 +17,7 @@ import SearchProduct from './src/screens/Home/SearchProduct';
 import MainTabs from './src/screens/Home/TabNavigation/TabNavigation';
 import WelcomeScreen from './src/screens/Home/WelcomeScreen';
 import ProductDetails from './src/screens/Home/ProductDetails';
+import TodaysDeals from './src/screens/Home/TodaysDeals';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -28,6 +29,7 @@ function AuthStack() {
       <Stack.Screen name="SignIn" component={SignIn} options={{ animation: "slide_from_left" }} />
       <Stack.Screen name="SignUp" component={SignUp} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="TodaysDeals" component={TodaysDeals} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="ProductDetails" component={ProductDetails} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="Notification" component={Notification} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="SearchProduct" component={SearchProduct} />

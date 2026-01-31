@@ -12,5 +12,6 @@ export type AuthStackParamList = {
   MainTabs: undefined;
   Notification: undefined;
   SearchProduct: undefined;
+  TodaysDeals: undefined;
   ProductDetails: undefined;
 };

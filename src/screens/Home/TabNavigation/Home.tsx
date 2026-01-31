@@ -265,12 +265,13 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
                 <TouchableOpacity style={styles.advertiseButton}>
                     <Text style={styles.advertiseButtonText}>Advertise on DealNux</Text>
                     <MaterialIcons name="arrow-forward" size={20} color="white" />
-                </TouchableOpacity>
+                </TouchableOpacity> 
+                {/* <Image source={require("../../../../assets/ads.png")} resizeMode="stretch" /> */}
 
                 {/* Today's Best Deals */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Today's Best Deals</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate("TodaysDeals")}>
                         <Text style={styles.seeAllText}>See all</Text>
                     </TouchableOpacity>
                 </View>
@@ -288,7 +289,7 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
                 {/* Recommended for You */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Recommended for You</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity >
                         <Text style={styles.seeAllText}>See all</Text>
                     </TouchableOpacity>
                 </View>

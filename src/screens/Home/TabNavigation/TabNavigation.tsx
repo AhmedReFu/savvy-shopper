@@ -1,4 +1,4 @@
-import { AntDesign, Ionicons } from "@expo/vector-icons";
+import { AntDesign, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -83,11 +83,7 @@ export default function MainTabs() {
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabItem}>
-                            <Ionicons
-                                name={focused ? "grid" : "grid-outline"}
-                                size={22}
-                                color={focused ? "#2563EB" : "#9CA3AF"}
-                            />
+                            <MaterialCommunityIcons name={focused ? "view-dashboard" : "view-dashboard-outline"} size={22} color={focused ? "#2563EB" : "#9CA3AF"} />
                             <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
                                 Menu
                             </Text>

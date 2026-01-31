@@ -1,29 +1,30 @@
-import { AntDesign, EvilIcons, Ionicons, MaterialIcons } from '@expo/vector-icons'
+import { Ionicons, MaterialIcons } from '@expo/vector-icons'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import React, { useState } from 'react'
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Dimensions, Image, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AppHeader from '../../components/AppHeader'
+import BackButton from '../../components/BackButton'
 import { AuthStackParamList } from '../../Navigation/types'
-
-type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const { width } = Dimensions.get('window')
 
-const SearchProduct = () => {
-    const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
-    const [favorites, setFavorites] = useState<Set<string>>(new Set())
+const TodaysDeals = () => {
+const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
     const recommendedProducts = [
         {
             id: '3',
-            name: 'Bose QuietComfort 45 Wireless Noise Cancelling',
-            price: 252,
-            originalPrice: 420,
-            discount: '-45%',
-            image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400',
-            seller: 'Amazon'
+            name: 'MacBook Air M2',
+            price: 999,
+            originalPrice: 1099,
+            discount: '-10%',
+            image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400',
+            seller: 'Best Buy'
         },
         {
             id: '4',
@@ -36,12 +37,12 @@ const SearchProduct = () => {
         },
         {
             id: '5',
-            name: 'Sony WH-1000XM5',
-            price: 252,
-            originalPrice: 420,
-            discount: '-45%',
-            image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400',
-            seller: 'Amazon'
+            name: 'iPhone 15 Pro',
+            price: 999,
+            originalPrice: 1099,
+            discount: '-08%',
+            image: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400',
+            seller: 'Apple'
         },
         {
             id: '6',
@@ -51,7 +52,34 @@ const SearchProduct = () => {
             discount: '-20%',
             image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
             seller: 'Best Buy'
-        }
+        },
+        {
+            id: '7',
+            name: 'Sony Earbuds',
+            price: 199,
+            originalPrice: 249,
+            discount: '-20%',
+            image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
+            seller: 'Best Buy'
+        },
+        {
+            id: '8',
+            name: 'Sony Earbuds',
+            price: 199,
+            originalPrice: 249,
+            discount: '-20%',
+            image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
+            seller: 'Best Buy'
+        },
+        {
+            id: '9',
+            name: 'Sony Earbuds',
+            price: 199,
+            originalPrice: 249,
+            discount: '-20%',
+            image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400',
+            seller: 'Best Buy'
+        },
     ]
 
     const toggleFavorite = (id: string) => {
@@ -66,16 +94,17 @@ const SearchProduct = () => {
         })
     }
 
-    const ProductCard = ({ product }: any) => {
+    const ProductCard = ({ product, size = 'medium' }: any) => {
+        const cardWidth = size === 'medium' ? (width - 60) / 2 : (width - 50) / 2 - 8
         const isFavorite = favorites.has(product.id)
 
         return (
-            <View style={styles.productCard}>
+            <Pressable onPress={() => navigation.navigate("ProductDetails")} style={[styles.productCard, { width: cardWidth }]}>
                 <View style={styles.imageContainer}>
                     <Image
                         source={{ uri: product.image }}
                         style={styles.productImage}
-                        resizeMode="stretch"
+                        resizeMode="cover"
                     />
                     <View style={styles.discountBadge}>
                         <Text style={styles.discountText}>{product.discount}</Text>
@@ -92,7 +121,7 @@ const SearchProduct = () => {
                     </TouchableOpacity>
                 </View>
                 <View style={styles.productInfo}>
-                    <Text style={styles.productName} numberOfLines={2}>
+                    <Text style={styles.productName} numberOfLines={1}>
                         {product.name}
                     </Text>
                     <View style={styles.priceRow}>
@@ -105,81 +134,41 @@ const SearchProduct = () => {
                         <MaterialIcons name="arrow-forward" size={16} color="#94A3B8" />
                     </View>
                 </View>
-            </View>
+            </Pressable>
         )
     }
-
-    return (
-        <SafeAreaView style={styles.container}>
-            <View >
-                <View style={styles.searchContainer}>
-                    <EvilIcons name="search" size={40} color="#94A3B8" />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Wireless Headphones"
-                        placeholderTextColor="#94A3B8"
-                    />
-                    <TouchableOpacity style={styles.closeButton}>
-                        <AntDesign name="close" size={14} color="white" />
-                    </TouchableOpacity>
-                </View>
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                >
-                    {recommendedProducts.map((product) => (
-                        <ProductCard key={product.id} product={product} />
-                    ))}
-                    <View style={{ height: 100 }} />
-                </ScrollView>
-            </View>
-
-
+  return (
+      <SafeAreaView className="flex-1 bg-[#F9F9FB]">
+          <View className="px-5  ">
+              <View className="flex-row items-center gap-4">
+                  <AppHeader left={() => <BackButton />} />
+                  <Text className="text-lg font-bold text-gray-900">Today’s Best Deals</Text>
+                  
+              </View>
+              <ScrollView
+              showsVerticalScrollIndicator={false}
+              >
+                  <View style={styles.recommendedGrid}>
+                                      {recommendedProducts.map((product) => (
+                                          <ProductCard key={product.id} product={product} size="small" />
+                                      ))}
+                                  </View>
+              </ScrollView>
+          </View>
         </SafeAreaView>
-    )
+  )
 }
 
-export default SearchProduct;
+export default TodaysDeals
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F9F9FB',
-        paddingHorizontal: 20,
-    },
 
-    // Search
-    searchContainer: {
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        flexDirection: 'row',
-        paddingVertical: 12,
-        paddingHorizontal: 12,
-        marginVertical: 20,
-        alignItems: 'center',
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 16,
-        color: '#1F2937',
-        paddingHorizontal: 8,
-    },
-    closeButton: {
-        backgroundColor: '#64748B',
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
+    
     // Product Card
     productCard: {
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
         overflow: 'hidden',
-        marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
@@ -188,7 +177,7 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         position: 'relative',
-        height: 220,
+        height: 160,
         backgroundColor: '#E2E8F0',
     },
     productImage: {
@@ -207,16 +196,16 @@ const styles = StyleSheet.create({
     discountText: {
         color: '#000',
         fontWeight: 'bold',
-        fontSize: 16,
+        fontSize: 12,
     },
     favoriteButton: {
         position: 'absolute',
         top: 12,
         right: 12,
         backgroundColor: 'white',
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -226,40 +215,48 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     productInfo: {
-        padding: 16,
+        padding: 12,
         backgroundColor: '#FFFFFF',
     },
     productName: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '600',
         color: '#1F2937',
-        marginBottom: 8,
-        lineHeight: 22,
+        marginBottom: 6,
     },
     priceRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-        marginBottom: 12,
+        marginBottom: 8,
     },
     price: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        color: '#2563EB',
+        color: '#000',
     },
     originalPrice: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#94A3B8',
         textDecorationLine: 'line-through',
     },
     sellerRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        gap: 4,
     },
     sellerText: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#94A3B8',
         flex: 1,
+    },
+
+    // Recommended Grid
+    recommendedGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 20,
+        marginBottom:60,
+        justifyContent: 'space-between',
     },
 })
