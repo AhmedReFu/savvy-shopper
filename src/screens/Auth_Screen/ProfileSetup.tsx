@@ -29,11 +29,22 @@ const ProfileSetup = () => {
     };
 
 
-    if (showSuccessModal) {
-        setInterval(() => {
-            setShowSuccessModal(false)
+
+    useEffect(() => {
+        if (!showSuccessModal) return;
+
+        const t = setTimeout(() => {
+            setShowSuccessModal(false);
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "MainTabs" as never }],
+            });
         }, 5000);
-    }
+
+        return () => clearTimeout(t);
+    }, [showSuccessModal]);
+
+
     const interests = [
         "Grocery", "Electronics", "Pets", "Home", "Beauty", "Fashion", "Automotive"
     ]
@@ -74,7 +85,7 @@ const ProfileSetup = () => {
                  
                 </View>
 
-                <Text className='text-3xl mt-4 font-bold'>Let's get to know you</Text>
+                <Text className='text-3xl font-bold'>Let's get to know you</Text>
                 <Text className='text-xl my-2'>Customize your feed to see the best deals
                     near you,</Text>
                 <View>
@@ -104,8 +115,8 @@ const ProfileSetup = () => {
                         placeholder="Enter Referral Code (Optional)"
                     />
                 </View>
-                <Text className='text-xl my-6'>Interests</Text>
-                <View className='flex-row flex-wrap gap-3 my-3'>
+                <Text className='text-xl my-5'>Interests</Text>
+                <View className='flex-row flex-wrap gap-3 my-2'>
                     {interests.map((data, index) => {
                         const active = interestsItem.includes(data);
 

@@ -3,7 +3,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import React from "react";
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Cart from "./Cart";
+import Dashboard from "./Dashboard";
 import Home from "./Home";
+import Profile from "./Profile";
+import Scanning from "./Scanning";
 
 const Tab = createBottomTabNavigator();
 
@@ -67,7 +70,7 @@ export default function MainTabs() {
             {/* Center Scan Button */}
             <Tab.Screen
                 name="ScanTab"
-                component={Cart}
+                component={Scanning}
                 options={{
                     tabBarIcon: () => (
                         <AntDesign name="scan" size={28} color="white" />
@@ -79,7 +82,7 @@ export default function MainTabs() {
             {/* Menu Tab */}
             <Tab.Screen
                 name="MenuTab"
-                component={Cart}
+                component={Dashboard}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabItem}>
@@ -95,7 +98,7 @@ export default function MainTabs() {
             {/* Profile Tab */}
             <Tab.Screen
                 name="ProfileTab"
-                component={Cart}
+                component={Profile}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <View style={styles.tabItem}>

@@ -14,4 +14,17 @@ export type AuthStackParamList = {
   SearchProduct: undefined;
   TodaysDeals: undefined;
   ProductDetails: undefined;
+  CheckoutOptions: undefined;
+  SavingsSummary: undefined;
+  ScanProduct: undefined;
+  MyFavourite: undefined;
+  Subscription: undefined;
+  EditProfile: undefined;
+  UpdatePassword: undefined;
+  NotificationSettings: undefined;
+  PrivacyPolicy: undefined;
+  ReFarAndEarn: undefined;
+  MyAds: undefined;
+  AdsPerformance: undefined;
+  CreateAds: undefined;
 };

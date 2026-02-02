@@ -1,11 +1,17 @@
 import { MaterialIcons } from '@expo/vector-icons'
+import { NavigationProp, useNavigation } from '@react-navigation/native'
+import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import React, { useState } from 'react'
 import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import CartProductCard from '../../../components/CartProductCard'
 import { Images } from '../../../constants'
+import { AuthStackParamList } from '../../../Navigation/types'
+
+type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const Cart = () => {
+  const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
   const [isEnabled, setIsEnabled] = useState(true);
   const toggleSwitch = () => setIsEnabled(previousState => !previousState);
@@ -143,7 +149,7 @@ const Cart = () => {
             </View>
           </View>
 
-          <Pressable className='p-5 bg-[#2355B6] rounded-xl mb-6'>
+          <Pressable className='p-5 bg-[#2355B6] rounded-xl mb-6' onPress={() => navigation.navigate("CheckoutOptions")} >
             <Text className='text-white text-xl font-bold text-center'>
               See Best Checkout Option
             </Text>

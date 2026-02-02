@@ -56,7 +56,7 @@ const CartProductCard = ({
             {/* Delete Button (Hidden Behind) */}
             <View style={styles.deleteContainer}>
                 <TouchableOpacity style={styles.deleteButton}>
-                    <MaterialIcons name="delete" size={28} color="white" />
+                    <MaterialIcons name="delete" size={36} color="black" />
                 </TouchableOpacity>
             </View>
 
@@ -94,11 +94,11 @@ const CartProductCard = ({
                 {/* Quantity Controls */}
                 <View style={styles.quantityContainer}>
                     <TouchableOpacity style={styles.quantityButton}>
-                        <MaterialIcons name="add" size={18} color="#2355B6" />
+                        <MaterialIcons name="add" size={24} color="black" />
                     </TouchableOpacity>
                     <Text style={styles.quantityText}>{quantity}</Text>
                     <TouchableOpacity style={styles.quantityButton}>
-                        <MaterialIcons name="remove" size={18} color="#2355B6" />
+                        <MaterialIcons name="remove" size={24} color="black" />
                     </TouchableOpacity>
                 </View>
             </Animated.View>
@@ -111,8 +111,10 @@ export default CartProductCard
 const styles = StyleSheet.create({
     container: {
         position: 'relative',
-        marginBottom: 6,
+        marginBottom: 10,
         overflow: 'hidden',
+        backgroundColor: '#FFC649',
+        borderRadius: 16
     },
     deleteContainer: {
         position: 'absolute',
@@ -124,9 +126,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     deleteButton: {
-        backgroundColor: '#EF4444',
+        backgroundColor: '#FFC649',
         width: 60,
-        height: 60,
+        height: 100,
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
@@ -190,17 +192,20 @@ const styles = StyleSheet.create({
     quantityContainer: {
         alignItems: 'center',
         gap: 8,
+        backgroundColor: '#F3F4F6',
+        padding: 6,
+        borderRadius: 12,
     },
     quantityButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#EFF6FF',
+        width: 30,
+        height: 30,
+        borderRadius: 6,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
     },
     quantityText: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '600',
         color: '#1F2937',
     },

@@ -14,6 +14,7 @@ import {
     View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import PremiumModal from '../../../components/PremiumModal'
 import { Images } from '../../../constants'
 import { AuthStackParamList } from '../../../Navigation/types'
 
@@ -24,6 +25,7 @@ type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 const Home = () => {
 const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
     
+    const [premiumModalVisible, setPremiumModalVisible] = useState(false)
     const [selectedCategory, setSelectedCategory] = useState('All')
     const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
@@ -255,18 +257,18 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
                     <Text style={styles.premiumDescription}>
                         Experience ad-free browsing and exclusive{'\n'}price drop alerts.
                     </Text>
-                    <TouchableOpacity style={styles.premiumButton}>
+                    <TouchableOpacity style={styles.premiumButton} onPress={() => setPremiumModalVisible(true)}>
                         <Text style={styles.premiumButtonText}>Start Free Trial</Text>
                         <MaterialIcons name="arrow-forward" size={18} color="#0057FF" />
                     </TouchableOpacity>
                 </LinearGradient>
 
                 {/* Advertise Button */}
-                <TouchableOpacity style={styles.advertiseButton}>
+                <TouchableOpacity style={styles.advertiseButton} onPress={() => navigation.navigate("MyAds")}>
                     <Text style={styles.advertiseButtonText}>Advertise on DealNux</Text>
                     <MaterialIcons name="arrow-forward" size={20} color="white" />
                 </TouchableOpacity> 
-                {/* <Image source={require("../../../../assets/ads.png")} resizeMode="stretch" /> */}
+
 
                 {/* Today's Best Deals */}
                 <View style={styles.sectionHeader}>
@@ -302,6 +304,10 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
                 <View style={{ height: 30 }} />
             </ScrollView>
+            <PremiumModal
+                visible={premiumModalVisible}
+                onClose={() => setPremiumModalVisible(false)}
+            />
         </SafeAreaView>
     )
 }
@@ -367,7 +373,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 20,
-        marginRight: 12,
+        marginRight: 20,
         gap: 6,
     },
     categoryButtonActive: {
@@ -494,7 +500,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         paddingRight: 20,
         gap: 16,
-        marginBottom: 24,
+        marginBottom: 20,
     },
 
     // Product Card
@@ -590,7 +596,7 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         paddingHorizontal: 20,
         gap: 20,
-        marginBottom:25,
+        marginBottom: 40,
         justifyContent: 'space-between',
     },
 })
