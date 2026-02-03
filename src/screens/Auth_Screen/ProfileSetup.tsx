@@ -93,7 +93,7 @@ const ProfileSetup = () => {
                         <MaterialCommunityIcons name="account-circle" size={120} color="#E3E3E9" />
                     </View>
                     <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-64
-                  bottom-9 border border-white rounded-full' />
+                  bottom-6 border border-white rounded-full' />
                 </View>
                 <Text className='text-[#2355B6] text-3xl text-center'>
                     Upload Photo

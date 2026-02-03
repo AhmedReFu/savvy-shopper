@@ -4,6 +4,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import "./global.css";
 import { AuthStackParamList } from './src/Navigation/types';
+import AdsPerformance from './src/screens/Ads/AdsPerformance';
+import CreateAds from './src/screens/Ads/CreateAds';
+import MyAds from './src/screens/Ads/MyAds';
 import AuthScreen from './src/screens/Auth_Screen/AuthScreen';
 import CreateNewPassword from './src/screens/Auth_Screen/CreateNewPassword';
 import OtpAuth from './src/screens/Auth_Screen/OtpAuth';
@@ -12,25 +15,22 @@ import ProfileSetup from './src/screens/Auth_Screen/ProfileSetup';
 import ResetPassword from './src/screens/Auth_Screen/ResetPassword';
 import SignIn from './src/screens/Auth_Screen/SignIn';
 import SignUp from './src/screens/Auth_Screen/SignUp';
-import AdsPerformance from './src/screens/Home/AdsPerformance';
 import CheckoutOptions from './src/screens/Home/CheckoutOptions';
-import CreateAds from './src/screens/Home/CreateAds';
-import EditProfile from './src/screens/Home/EditProfile';
-import MyAds from './src/screens/Home/MyAds';
-import MyFavourite from './src/screens/Home/MyFavourite';
-import Notification from './src/screens/Home/Notification';
-import NotificationSettings from './src/screens/Home/NotificationSettings';
-import PrivacyPolicy from './src/screens/Home/PrivacyPolicy';
 import ProductDetails from './src/screens/Home/ProductDetails';
-import ReFarAndEarn from './src/screens/Home/ReFarAndEarn';
 import SavingsSummary from './src/screens/Home/SavingsSummary';
 import ScanProduct from './src/screens/Home/ScanProduct';
 import SearchProduct from './src/screens/Home/SearchProduct';
-import SubscriptionPlans from './src/screens/Home/Subscription';
-import MainTabs from './src/screens/Home/TabNavigation/TabNavigation';
 import TodaysDeals from './src/screens/Home/TodaysDeals';
-import UpdatePassword from './src/screens/Home/UpdatePassword';
 import WelcomeScreen from './src/screens/Home/WelcomeScreen';
+import EditProfile from './src/screens/Settings/EditProfile';
+import MyFavourite from './src/screens/Settings/MyFavourite';
+import Notification from './src/screens/Settings/Notification';
+import NotificationSettings from './src/screens/Settings/NotificationSettings';
+import PrivacyPolicy from './src/screens/Settings/PrivacyPolicy';
+import ReFarAndEarn from './src/screens/Settings/ReFarAndEarn';
+import UpdatePassword from './src/screens/Settings/UpdatePassword';
+import Subscription from './src/screens/Subscriptions/Subscription';
+import MainTabs from './src/screens/TabNavigation/TabNavigation';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -52,7 +52,7 @@ function AuthStack() {
       <Stack.Screen name="MyFavourite" component={MyFavourite} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="UpdatePassword" component={UpdatePassword} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="EditProfile" component={EditProfile} options={{ animation: "slide_from_right" }} />
-      <Stack.Screen name="Subscription" component={SubscriptionPlans} options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="Subscription" component={Subscription} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="ScanProduct" component={ScanProduct} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="CheckoutOptions" component={CheckoutOptions} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="SavingsSummary" component={SavingsSummary} options={{ animation: "slide_from_right" }} />

@@ -3,7 +3,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { BlurView } from "expo-blur";
 import React, { useEffect, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
 import BackButton from "../../components/BackButton";
@@ -96,6 +96,7 @@ type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 const Subscription = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
     const [planType, setPlanType] = useState<PlanType>("monthly");
+    const isAndroid = Platform.OS === 'android';
     const [payOpen, setPayOpen] = useState(false);
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -147,15 +148,12 @@ const Subscription = () => {
     const trialText = planType === "monthly" ? "Free trial (7 days)" : "Free trial (14 days)";
 
     return (
-        <SafeAreaView style={styles.safe}>
-            <View style={styles.container}>
-
-                <View className="flex-row items-center gap-4">
-                    <AppHeader left={() => <BackButton />} />
-                    <Text className="text-lg font-bold text-gray-900">Subscription Plans</Text>
+        <SafeAreaView className="bg-[#F9F9FB] flex-1">
+            <View className="px-5">
+                <View className='flex-row items-center gap-4' >
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Subscription Plans</Text>} />
 
                 </View>
-
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {/* Segmented tabs */}
                     <View style={styles.segmentWrap}>
@@ -258,7 +256,9 @@ const Subscription = () => {
             >
                 <View style={StyleSheet.absoluteFill}>
                     {/* Blur */}
-                    <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+                    <BlurView intensity={isAndroid ? 2 : 15}
+                                            experimentalBlurMethod="dimezisBlurView"
+                                            style={[StyleSheet.absoluteFill,]} />
 
                     {/* Extra dim layer to make Android look closer to iOS */}
                     <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.8)]'>

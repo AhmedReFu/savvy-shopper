@@ -19,10 +19,10 @@ const UpdatePassword = () => {
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
-            <View className="px-5 flex-1">
+            <View className="px-5">
                 <View className='flex-row items-center gap-4' >
-                    <AppHeader left={() => <BackButton />} />
-                    <Text className='text-lg'>Change Password</Text>
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Change Password</Text>} />
+                    
 
                 </View>
 

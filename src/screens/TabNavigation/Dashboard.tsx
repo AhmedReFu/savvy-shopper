@@ -2,7 +2,7 @@ import { Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from '@expo
 import React from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import PriceChart from '../../../components/PieChart'
+import PriceChart from '../../components/PieChart'
 
 const Dashboard = () => {
     return (

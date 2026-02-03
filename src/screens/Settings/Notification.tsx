@@ -51,11 +51,10 @@ const Notification = () => {
         },
     ]
     return (
-        <SafeAreaView className="flex-1 bg-[#F9F9FB]">
-            <View className="px-5 pb-3">
-                <View className="flex-row items-center gap-4 mb-4">
-                    <AppHeader left={() => <BackButton />} />
-                    <Text className="text-lg font-bold text-gray-900">Notification</Text>
+        <SafeAreaView className="bg-[#F9F9FB] flex-1">
+            <View className="px-5">
+                <View className='flex-row items-center gap-4' >
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Notification</Text>} />
                 </View>
                 <View className="flex-row justify-between items-center mb-2">
                     <Text className="text-xl font-bold text-gray-900">All</Text>

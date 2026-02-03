@@ -141,8 +141,8 @@ const [favorites, setFavorites] = useState<Set<string>>(new Set())
       <SafeAreaView className="flex-1 bg-[#F9F9FB]">
           <View className="px-5  ">
               <View className="flex-row items-center gap-4">
-                  <AppHeader left={() => <BackButton />} />
-                  <Text className="text-lg font-bold text-gray-900">Today’s Best Deals</Text>
+                  <AppHeader left={() => <BackButton />} middle={() => <Text className="text-lg font-semibold">Today’s Best Deals</Text>} />
+
                   
               </View>
               <ScrollView
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         position: 'relative',
-        height: 160,
+        height: 180,
         backgroundColor: '#E2E8F0',
     },
     productImage: {

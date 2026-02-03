@@ -9,12 +9,12 @@ const NotificationSettings = () => {
     const toggleSwitch = () => setIsEnabled(previousState => !previousState);
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
-            <View className="px-5 flex-1">
+            <View className="px-5">
                 <View className='flex-row items-center gap-4' >
-                    <AppHeader left={() => <BackButton />} />
-                    <Text className='text-lg'>Notification Settings</Text>
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Notification Settings</Text>} />
 
                 </View>
+        
                 <View className='p-5 bg-white rounded-3xl '>
                     <Text className='text-2xl font-bold'>Alerts</Text>
                     <View className='flex-row justify-between items-center border-t border-[#F7F7F9] my-4'>

@@ -14,9 +14,10 @@ import {
     View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import PremiumModal from '../../../components/PremiumModal'
-import { Images } from '../../../constants'
-import { AuthStackParamList } from '../../../Navigation/types'
+import { AuthStackParamList } from '../../Navigation/types'
+import PremiumModal from '../../components/PremiumModal'
+import { Images } from '../../constants'
+
 
 const { width } = Dimensions.get('window')
 

@@ -67,10 +67,9 @@ const EditProfile = () => {
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
-            <View className="px-5 flex-1">
+            <View className="px-5">
                 <View className='flex-row items-center gap-4' >
-                    <AppHeader left={() => <BackButton />} />
-                    <Text className='text-lg'>Edit Profile</Text>
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Edit Profile</Text>} />
 
                 </View>
 
@@ -79,7 +78,7 @@ const EditProfile = () => {
                         <MaterialCommunityIcons name="account-circle" size={120} color="#E3E3E9" />
                     </View>
                     <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-64
-                  bottom-9 border border-white rounded-full' />
+                  bottom-6 border border-white rounded-full' />
                 </View>
                 <Text className='text-[#636F85] font-bold text-xl my-2'>Full Name </Text>
                 <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4'>

@@ -11,7 +11,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, { useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AuthStackParamList } from "../../../Navigation/types";
+import { AuthStackParamList } from "../../Navigation/types";
 
 const Card = ({ children, className = "" }: any) => (
     <View className={`bg-white rounded-2xl shadow-sm shadow-black/10 ${className}`}>
@@ -123,7 +123,7 @@ const Profile = () => {
                             <MaterialCommunityIcons name="account" size={64} color="#D1D6DB" />
                         </View>
 
-                        <View className="absolute right-[120px] top-[78px]">
+                        <View className="absolute right-[145px] top-[66px]">
                             <View className="bg-white rounded-full p-[2px]">
                                 <MaterialIcons name="add-circle" size={26} color="#2355B6" />
                             </View>

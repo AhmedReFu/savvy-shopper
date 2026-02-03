@@ -4,9 +4,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import React, { useState } from 'react'
 import { Image, Pressable, ScrollView, Switch, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import CartProductCard from '../../../components/CartProductCard'
-import { Images } from '../../../constants'
-import { AuthStackParamList } from '../../../Navigation/types'
+import { AuthStackParamList } from '../../Navigation/types'
+import CartProductCard from '../../components/CartProductCard'
+import { Images } from '../../constants'
+
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 

@@ -5,7 +5,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera'
 import React, { useState } from 'react'
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { AuthStackParamList } from '../../../Navigation/types'
+import { AuthStackParamList } from '../../Navigation/types'
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 

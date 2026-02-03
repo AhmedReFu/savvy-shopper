@@ -28,17 +28,15 @@ const ReferAndEarn = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.headerRow}>
-                    <AppHeader left={() => <BackButton />} />
-                    <Text style={styles.headerTitle}>Refer & Earn</Text>
+        <SafeAreaView className="bg-[#F9F9FB] flex-1">
+            <View className="px-5">
+                <View className='flex-row items-center gap-4' >
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>ReFar & Earn</Text>} />
+
                 </View>
-            </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.content}>
+                <View >
                     {/* Hero Card */}
                     <LinearGradient
                         colors={['#3B66B0', '#2952A3']}
@@ -138,7 +136,8 @@ const ReferAndEarn = () => {
                         </View>
                     </View>
                 </View>    
-            </ScrollView>
+                </ScrollView>
+                </View>
         </SafeAreaView>
     )
 }
@@ -164,9 +163,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#1F2937',
-    },
-    content: {
-        paddingHorizontal: 20,
     },
     heroCard: {
         borderRadius: 28,

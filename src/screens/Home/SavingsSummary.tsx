@@ -12,22 +12,22 @@ const SavingsSummary = () => {
 
     return (
         <SafeAreaView className="flex-1 bg-[#F9F9FB]">
-            <View className="px-5 pb-3 mb-4 ">
+            <View className="px-5 ">
                 <View className="flex-row items-center gap-4">
-                    <AppHeader left={() => <BackButton />} />
-                    <Text className="text-lg font-bold text-gray-900">Savings Summary</Text>
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className="text-lg font-semibold ">Savings Summary</Text>} />
+
 
                 </View>
                 <ScrollView showsVerticalScrollIndicator={false}
-                
+                    className='mb-5'
                 >
-                    <Image source={Images.SavingsSummary} className='w-full h-64 my-4' resizeMode='cover' />
+                    <Image source={Images.SavingsSummary} className='w-full h-64 my-2' resizeMode='cover' />
 
                     <View  className='flex-row items-center gap-4'>
                         <MaterialCommunityIcons name="ticket-percent" size={30} color="#FFC649" />
-                        <Text className='text-3xl font-bold'>Coupons applied</Text>
+                        <Text className='text-xl font-bold'>Coupons applied</Text>
                     </View>
-                    <View className='bg-[#27C8401A] border border-[#27C84059] flex-row justify-between items-center p-4 rounded-2xl my-2'>
+                    <View className='bg-[#27C8401A] border border-[#27C84059] flex-row justify-between items-center p-3 rounded-2xl my-2'>
                         
                         <View className='flex-row items-center justify-center gap-4'>
                             <Ionicons name="checkmark-circle" size={28} color="#137C0A" />
@@ -37,7 +37,7 @@ const SavingsSummary = () => {
                         </View>
                         <Text className='text-[#137C0A] text-xl'>APPLIED</Text>
                     </View>
-                    <View className='bg-[#27C8401A] border border-[#27C84059] flex-row justify-between items-center p-4 rounded-2xl my-2'>
+                    <View className='bg-[#27C8401A] border border-[#27C84059] flex-row justify-between items-center p-3 rounded-2xl my-2'>
                         
                         <View className='flex-row items-center justify-center gap-4'>
                             <Ionicons name="checkmark-circle" size={28} color="#137C0A" />
@@ -47,7 +47,7 @@ const SavingsSummary = () => {
                         </View>
                         <Text className='text-[#137C0A] text-xl'>APPLIED</Text>
                     </View>
-                    <View className='bg-[#27C8401A] border border-[#27C84059] flex-row justify-between items-center p-4 rounded-2xl my-2'>
+                    <View className='bg-[#27C8401A] border border-[#27C84059] flex-row justify-between items-center p-3 rounded-2xl my-2'>
                         
                         <View className='flex-row items-center justify-center gap-4'>
                             <Ionicons name="checkmark-circle" size={28} color="#137C0A" />
@@ -57,7 +57,7 @@ const SavingsSummary = () => {
                         </View>
                         <Text className='text-[#137C0A] text-xl'>APPLIED</Text>
                     </View>
-                    <Text className='text-3xl font-bold my-4'>Savings breakdown</Text>
+                    <Text className='text-xl font-bold my-4'>Savings breakdown</Text>
                     <View className='border rounded-3xl p-4 border-[#D1D6DB]'>
                         <View className='flex-row justify-between'>
                             <Text className='text-xl text-[#636F85]'>

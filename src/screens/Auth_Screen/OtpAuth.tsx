@@ -7,6 +7,7 @@ import {
     Image,
     Keyboard,
     Modal,
+    Platform,
     StyleSheet,
     Text,
     TextInput,
@@ -25,9 +26,11 @@ const { width, height } = Dimensions.get('window');
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const OtpAuth = () => {
-    const navigation = useNavigation<NavigationProp<AuthNavProp>>();
+    const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
+    const isAndroid = Platform.OS === 'android';
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [timer, setTimer] = useState(60);
 
@@ -222,7 +225,11 @@ const OtpAuth = () => {
             >
                 <View style={StyleSheet.absoluteFill}>
                     {/* Blur */}
-                    <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+
+                    <BlurView intensity={isAndroid ? 2 : 15}
+                        experimentalBlurMethod="dimezisBlurView"
+                        style={[StyleSheet.absoluteFill,]} />
+
 
                     {/* Extra dim layer to make Android look closer to iOS */}
                     <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.8)]'>

@@ -132,7 +132,7 @@ const MyFavourite = () => {
     };
 
     const ProductCard = ({ product }: any) => {
-        const cardWidth = (width - 50) / 2 - 8;
+        const cardWidth = (width - 50) / 2 - 6;
         const isFavorite = favorites.has(product.id);
 
         return (
@@ -197,7 +197,7 @@ const MyFavourite = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#F9F9FB" }}>
-            <View style={{ paddingHorizontal: 20, flex: 1 }}>
+            <View style={{ paddingHorizontal: 20 }}>
                 {/* Header row */}
                 <View style={styles.headerRow}>
                     <AppHeader left={() => <BackButton />} />
@@ -226,7 +226,7 @@ const MyFavourite = () => {
                 </View>
 
                 {/* Grid */}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView showsVerticalScrollIndicator={false} className="mb-20">
                     <View style={styles.recommendedGrid}>
                         {recommendedProducts.map((product) => (
                             <ProductCard key={product.id} product={product} />
@@ -245,7 +245,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        marginTop: 6,
     },
     headerTitle: {
         fontSize: 20,
@@ -270,8 +269,8 @@ const styles = StyleSheet.create({
     chipRow: {
         flexDirection: "row",
         gap: 14,
-        marginTop: 18,
-        marginBottom: 18,
+        marginTop: 4,
+        marginBottom: 12,
     },
     chip: {
         paddingHorizontal: 18,
@@ -301,7 +300,7 @@ const styles = StyleSheet.create({
         flexWrap: "wrap",
         justifyContent: "space-between",
         gap: 20,
-        paddingBottom: 60,
+        marginBottom:60
     },
 
     productCard: {
@@ -318,7 +317,7 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         position: "relative",
-        height: 190,
+        height: 180,
         backgroundColor: "#E2E8F0",
     },
     productImage: {
