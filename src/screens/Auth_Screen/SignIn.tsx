@@ -2,8 +2,7 @@ import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-
+import { Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
@@ -11,7 +10,6 @@ import { AuthStackParamList } from '../../Navigation/types';
 const { width, height } = Dimensions.get('window');
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
-
 
 const SignIn = () => {
 
@@ -25,8 +23,8 @@ const SignIn = () => {
 
 
     return (
-        <SafeAreaView className='bg-[#F9F9FB] flex-1' >
-            <View>
+        <SafeAreaView className='flex-1 bg-[#F9F9FB] ' >
+            <View className=' px-5 '>
                 <View style={styles.logoContainer}>
                     <Image
                         source={Images.Logo}
@@ -34,14 +32,14 @@ const SignIn = () => {
                         resizeMode="contain"
                     />
                 </View>
-                <View className=' px-5' style={styles.box}>
+                <ScrollView showsVerticalScrollIndicator={false} >
                     <Text className='text-3xl font-bold'>Welcome to DEALNUX!</Text>
                     <Text className='text-xl text-[#636F85] my-4'>Sign in to track prices and save money. </Text>
                     <Text style={styles.label}>Email address </Text>
-                    <View style={styles.passwordContainer} className='border'>
+                    <View style={styles.passwordContainer} className='border gap-4'>
                         <MaterialIcons name="email" size={24} color="#334155" />
                         <TextInput
-                            style={styles.input}
+                            className='text-xl flex-1'
                             placeholder="Your email ex: yourmail@gamil.com"
                             placeholderTextColor="#A0A0A0"
                             value={email}
@@ -52,10 +50,10 @@ const SignIn = () => {
                     </View>
 
                     <Text style={styles.label}>Password</Text>
-                    <View style={styles.passwordContainer} className='border'>
+                    <View style={styles.passwordContainer} className='border gap-4'>
                         <Entypo name="lock" size={24} color="#334155" />
                         <TextInput
-                            style={styles.passwordInput}
+                            className='text-xl flex-1'
                             placeholder="****************"
                             placeholderTextColor="#A0A0A0"
                             value={password}
@@ -102,23 +100,54 @@ const SignIn = () => {
                     <View className='flex-row justify-between my-2'>
                         <TouchableOpacity >
                             <Image className='h-16 w-52' source={Images.Google} resizeMode='stretch' />
+                            {/* <LoginButton
+                                onLoginFinished={(error, result) => {
+                                    if (error) {
+                                        console.log("Login error:", error);
+                                    } else if (result.isCancelled) {
+                                        console.log("Login cancelled");
+                                    } else {
+                                        AccessToken.getCurrentAccessToken().then(async data => {
+                                            if (!data) return;
+
+                                            try {
+                                                const response = await fetch(
+                                                    "https://agen-backend-office.vercel.app/api/v1/auth/facebook",
+                                                    {
+                                                        method: "POST",
+                                                        headers: {
+                                                            "Content-Type": "application/json",
+                                                        },
+                                                        body: JSON.stringify({
+                                                            accessToken: data.accessToken,
+                                                        }),
+                                                    }
+                                                );
+
+                                                const json = await response.json();
+                                                console.log("Backend login success:", json);
+                                            } catch (err) {
+                                                console.log("API error:", err);
+                                            }
+                                        });
+                                    }
+                                }}
+                                onLogoutFinished={() => console.log("Logged out")}
+                            /> */}
                         </TouchableOpacity>
                         <TouchableOpacity >
                             <Image className='h-16 w-52' source={Images.Apple} resizeMode='stretch' />
                         </TouchableOpacity>
                     </View>
-                    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap" }}>
+                    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap" }} className='mb-20'>
                         <Text style={{ fontSize: 18 }}>Don't have an account? </Text>
 
                         <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
                             <Text style={{ fontSize: 18, color: "red" }}>Sign Up</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-
+                </ScrollView>
             </View>
-
-
         </SafeAreaView >
     )
 }
@@ -126,9 +155,7 @@ const SignIn = () => {
 export default SignIn;
 
 const styles = StyleSheet.create({
-    box: {
-        paddingHorizontal: 20,
-    },
+
 
     logoContainer: {
         alignItems: 'center',
@@ -151,6 +178,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 16,
+        marginRight: 10,
         fontSize: 16,
         color: '#636F85',
     },

@@ -56,7 +56,7 @@ const PaymentMethodModal = ({
                     <TouchableOpacity onPress={onClose} className="bg-[#2354b623] rounded-2xl px-6 py-3 mt-5">
                         <Text className="text-black font-bold text-xl">Cancel</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity  className="bg-[#2355B6] rounded-2xl px-6 py-3 mt-5" >
+                    <TouchableOpacity onPress={onConfirm} className="bg-[#2355B6] rounded-2xl px-6 py-3 mt-5" >
                         <Text className="text-white font-bold text-xl">Yes, Logout </Text>
                     </TouchableOpacity>
                 </View>
@@ -330,8 +330,10 @@ const Profile = () => {
                 }}
                 onConfirm={() => {
 
-                    setShowSuccessModal(true);
-                    setPayOpen(false);
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: "SignIn" }],
+                    });
                 }}
             />
         </SafeAreaView>

@@ -1,12 +1,9 @@
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BlurView } from 'expo-blur';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Dimensions,
     Image,
-    Keyboard,
-    Modal,
     Platform,
     StyleSheet,
     Text,
@@ -19,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthStackParamList } from '../../Navigation/types';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
+import SuccessModal from '../../components/SuccessModal';
 import { Images } from '../../constants';
 
 const { width, height } = Dimensions.get('window');
@@ -34,7 +32,6 @@ const OtpAuth = () => {
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [timer, setTimer] = useState(60);
 
-    const [spinnerRotation, setSpinnerRotation] = useState(0);
     const [isVerifying, setIsVerifying] = useState(false);
 
     const inputsRef = useRef<TextInput[]>([]);
@@ -42,7 +39,6 @@ const OtpAuth = () => {
     useEffect(() => {
         inputsRef.current = inputsRef.current.slice(0, 4);
     }, []);
-
     // Countdown timer
     useEffect(() => {
         if (timer <= 0) return;
@@ -51,34 +47,17 @@ const OtpAuth = () => {
     }, [timer]);
 
     // Spinner rotation only when modal visible
-    useEffect(() => {
-        let spinnerInterval: NodeJS.Timeout | undefined;
 
-        if (showSuccessModal) {
-            Keyboard.dismiss();
-            spinnerInterval = setInterval(() => {
-                setSpinnerRotation((prev) => (prev + 45) % 360);
-            }, 150);
-        } else {
-            setSpinnerRotation(0);
-        }
-
-        return () => {
-            if (spinnerInterval) clearInterval(spinnerInterval);
-        };
-    }, [showSuccessModal]);
 
     const handleChange = (text: string, index: number) => {
         const numericText = text.replace(/[^0-9]/g, '');
         const newCode = [...code];
         newCode[index] = numericText;
         setCode(newCode);
-
         // Move to next input
         if (numericText && index < 3) {
             setTimeout(() => inputsRef.current[index + 1]?.focus(), 10);
         }
-
         // Auto-submit when last digit entered
         if (numericText && index === 3) {
             const enteredCode = newCode.join('');
@@ -99,7 +78,6 @@ const OtpAuth = () => {
     };
 
     const handleSubmit = async (enteredCode: string) => {
-
         setIsVerifying(true);
         setShowSuccessModal(true);
         setTimeout(() => {
@@ -113,7 +91,6 @@ const OtpAuth = () => {
         const entered = code.join('');
         if (entered.length !== 4) return;
         handleSubmit(entered);
-
     };
 
     const formatTime = (sec: number) => {
@@ -123,16 +100,7 @@ const OtpAuth = () => {
         return `${mm}:${ss}`;
     };
 
-    const spinnerDots = [
-        { angle: 0, size: 12, opacity: 1 },
-        { angle: 45, size: 11, opacity: 0.9 },
-        { angle: 90, size: 10, opacity: 0.8 },
-        { angle: 135, size: 9, opacity: 0.6 },
-        { angle: 180, size: 8, opacity: 0.4 },
-        { angle: 225, size: 7, opacity: 0.3 },
-        { angle: 270, size: 6, opacity: 0.2 },
-        { angle: 315, size: 6, opacity: 0.1 },
-    ];
+
 
     const canResend = timer <= 0;
 
@@ -216,72 +184,12 @@ const OtpAuth = () => {
                 </View>
             </View>
 
-            {/* ✅ Real Blur Modal (iOS + Android) */}
-            <Modal
-                transparent={true}
-                animationType="fade"
+            <SuccessModal
                 visible={showSuccessModal}
-                onRequestClose={() => setShowSuccessModal(false)}
-            >
-                <View style={StyleSheet.absoluteFill}>
-                    {/* Blur */}
-
-                    <BlurView intensity={isAndroid ? 2 : 15}
-                        experimentalBlurMethod="dimezisBlurView"
-                        style={[StyleSheet.absoluteFill,]} />
-
-
-                    {/* Extra dim layer to make Android look closer to iOS */}
-                    <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.8)]'>
-
-                        {/* Content */}
-                        <View className="flex-1 justify-center items-center px-10">
-                            <View className="w-full max-w-[400px]">
-                                <View className="bg-white rounded-3xl p-10 items-center shadow-2xl">
-                                    <View className="mt-6">
-                                        <Image source={Images.Success} resizeMode="contain" />
-                                    </View>
-
-                                    <Text className="text-3xl font-bold text-center mt-8 mb-8">
-                                        Successful!
-                                    </Text>
-
-                                    <Text className="text-xl text-[#636F85] text-center mb-8 leading-6">
-                                        Your registration was completed{'\n'}successfully
-                                    </Text>
-
-                                    {/* Spinner */}
-                                    <View className="w-16 h-16 my-8 items-center justify-center">
-                                        {spinnerDots.map((dot, index) => {
-                                            const angle = (dot.angle + spinnerRotation) * (Math.PI / 180);
-                                            const radius = 20;
-                                            const x = Math.cos(angle) * radius;
-                                            const y = Math.sin(angle) * radius;
-
-                                            return (
-                                                <View
-                                                    key={index}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        width: dot.size,
-                                                        height: dot.size,
-                                                        borderRadius: dot.size / 2,
-                                                        backgroundColor: '#2355B6',
-                                                        opacity: dot.opacity,
-                                                        transform: [{ translateX: x }, { translateY: y }],
-                                                    }}
-                                                />
-                                            );
-                                        })}
-                                    </View> 
-
-
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                title="Successful!"
+                description="Your registration was completed successfully"
+                onClose={() => setShowSuccessModal(false)}
+            />
         </SafeAreaView>
     );
 };

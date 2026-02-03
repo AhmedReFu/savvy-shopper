@@ -1,27 +1,22 @@
-import { Ionicons } from '@expo/vector-icons'
-import React, { useEffect, useState } from 'react'
+import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useState } from 'react';
 import {
-    Image,
-    Keyboard,
     KeyboardAvoidingView,
-    Modal,
     Platform,
     Pressable,
     ScrollView,
-    StyleSheet,
     Text,
     TextInput,
-    View,
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+    View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { NavigationProp, useNavigation } from '@react-navigation/native'
-import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { BlurView } from 'expo-blur'
-import AppHeader from '../../components/AppHeader'
-import BackButton from '../../components/BackButton'
-import { Images } from '../../constants'
-import { AuthStackParamList } from '../../Navigation/types'
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AppHeader from '../../components/AppHeader';
+import BackButton from '../../components/BackButton';
+import SuccessModal from '../../components/SuccessModal';
+import { AuthStackParamList } from '../../Navigation/types';
 
 const FieldLabel = ({ children }: any) => (
     <Text className="text-[16px] font-semibold text-[#6B7280] mb-2">
@@ -68,54 +63,25 @@ const CreateAds = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
     
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [spinnerRotation, setSpinnerRotation] = useState(0);
 
     const [title, setTitle] = useState('')
     const [desc, setDesc] = useState('')
     const [url, setUrl] = useState('')
     const [budget, setBudget] = useState('')
 
-useEffect(() => {
-        let spinnerInterval: NodeJS.Timeout | undefined;
 
-        if (showSuccessModal) {
-            Keyboard.dismiss();
-            spinnerInterval = setInterval(() => {
-                setSpinnerRotation((prev) => (prev + 45) % 360);
-            }, 150);
-        } else {
-            setSpinnerRotation(0);
-        }
 
-        return () => {
-            if (spinnerInterval) clearInterval(spinnerInterval);
-        };
-    }, [showSuccessModal]);
-
-    const spinnerDots = [
-        { angle: 0, size: 12, opacity: 1 },
-        { angle: 45, size: 11, opacity: 0.9 },
-        { angle: 90, size: 10, opacity: 0.8 },
-        { angle: 135, size: 9, opacity: 0.6 },
-        { angle: 180, size: 8, opacity: 0.4 },
-        { angle: 225, size: 7, opacity: 0.3 },
-        { angle: 270, size: 6, opacity: 0.2 },
-        { angle: 315, size: 6, opacity: 0.1 },
-    ];
-
-useEffect(() => {
+    useEffect(() => {
         if (!showSuccessModal) return;
 
         const t = setTimeout(() => {
             setShowSuccessModal(false);
-            navigation.reset({
-                index: 0,
-                routes: [{ name: "MainTabs" as never }],
-            });
-        }, 3000);
+            navigation.goBack()
+        }, 5000); 
 
         return () => clearTimeout(t);
-    }, [showSuccessModal]);
+    }, [showSuccessModal, navigation]);
+
 
     return (
         <SafeAreaView className="flex-1 bg-[#F7F7FA]">
@@ -273,69 +239,12 @@ useEffect(() => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-            <Modal
-                            transparent={true}
-                            animationType="fade"
-                            visible={showSuccessModal}
-                            onRequestClose={() => setShowSuccessModal(false)}
-                        >
-                            <View style={StyleSheet.absoluteFill}>
-                                {/* Blur */}
-                                <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-            
-                                {/* Extra dim layer to make Android look closer to iOS */}
-                                <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.8)]'>
-            
-                                    {/* Content */}
-                                    <View className="flex-1 justify-center items-center px-10">
-                                        <View className="w-full max-w-[350px]">
-                                            <View className="bg-white rounded-3xl p-10 items-center shadow-2xl">
-                                                <View className="mt-6">
-                                                    <Image source={Images.Success} resizeMode="contain" />
-                                                </View>
-            
-                                                <Text className="text-3xl font-bold text-center mt-8 mb-8">
-                                        Submit Successful!
-                                                </Text>
-            
-                                                <Text className="text-xl text-[#636F85] text-center mb-8 leading-6">
-                                       
-                                        
-                                        If approved, campaign runs automatically.
-                                                </Text>
-            
-                                                {/* Spinner */}
-                                                <View className="w-16 h-16 my-8 items-center justify-center">
-                                                    {spinnerDots.map((dot, index) => {
-                                                        const angle = (dot.angle + spinnerRotation) * (Math.PI / 180);
-                                                        const radius = 20;
-                                                        const x = Math.cos(angle) * radius;
-                                                        const y = Math.sin(angle) * radius;
-            
-                                                        return (
-                                                            <View
-                                                                key={index}
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    width: dot.size,
-                                                                    height: dot.size,
-                                                                    borderRadius: dot.size / 2,
-                                                                    backgroundColor: '#2355B6',
-                                                                    opacity: dot.opacity,
-                                                                    transform: [{ translateX: x }, { translateY: y }],
-                                                                }}
-                                                            />
-                                                        );
-                                                    })}
-                                                </View> 
-            
-            
-                                            </View>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-                        </Modal>
+            <SuccessModal
+                visible={showSuccessModal}
+                title="Submit Successful!"
+                description="If approved, campaign runs automatically."
+                onClose={() => setShowSuccessModal(false)}
+            />
         </SafeAreaView>
     )
 }

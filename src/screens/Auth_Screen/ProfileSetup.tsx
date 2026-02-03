@@ -1,13 +1,12 @@
 import { Fontisto, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { BlurView } from 'expo-blur'
 import React, { useEffect, useState } from 'react'
-import { Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AppHeader from '../../components/AppHeader'
 import BackButton from '../../components/BackButton'
-import { Images } from '../../constants'
+import SuccessModal from '../../components/SuccessModal'
 import { AuthStackParamList } from '../../Navigation/types'
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
@@ -18,7 +17,6 @@ const ProfileSetup = () => {
     
     const [interestsItem, setInterestsItem] = useState<string[]>([]);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-     const [spinnerRotation, setSpinnerRotation] = useState(0);
 
     const toggle = (item: string) => {
         setInterestsItem(prev =>
@@ -27,7 +25,6 @@ const ProfileSetup = () => {
                 : [...prev, item]
         );
     };
-
 
 
     useEffect(() => {
@@ -48,33 +45,6 @@ const ProfileSetup = () => {
     const interests = [
         "Grocery", "Electronics", "Pets", "Home", "Beauty", "Fashion", "Automotive"
     ]
-    useEffect(() => {
-            let spinnerInterval: NodeJS.Timeout | undefined;
-    
-            if (showSuccessModal) {
-                
-                spinnerInterval = setInterval(() => {
-                    setSpinnerRotation((prev) => (prev + 45) % 360);
-                }, 150);
-            } else {
-                setSpinnerRotation(0);
-            }
-    
-            return () => {
-                if (spinnerInterval) clearInterval(spinnerInterval);
-            };
-        }, [showSuccessModal]);
-
-    const spinnerDots = [
-        { angle: 0, size: 12, opacity: 1 },
-        { angle: 45, size: 11, opacity: 0.9 },
-        { angle: 90, size: 10, opacity: 0.8 },
-        { angle: 135, size: 9, opacity: 0.6 },
-        { angle: 180, size: 8, opacity: 0.4 },
-        { angle: 225, size: 7, opacity: 0.3 },
-        { angle: 270, size: 6, opacity: 0.2 },
-        { angle: 315, size: 6, opacity: 0.1 },
-    ];
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
@@ -85,26 +55,26 @@ const ProfileSetup = () => {
                  
                 </View>
 
-                <Text className='text-3xl font-bold'>Let's get to know you</Text>
+                <Text className='text-2xl font-bold'>Let's get to know you</Text>
                 <Text className='text-xl my-2'>Customize your feed to see the best deals
                     near you,</Text>
                 <View>
                     <View className='items-center my-2'>
                         <MaterialCommunityIcons name="account-circle" size={120} color="#E3E3E9" />
                     </View>
-                    <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-64
+                    <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-60
                   bottom-6 border border-white rounded-full' />
                 </View>
-                <Text className='text-[#2355B6] text-3xl text-center'>
+                <Text className='text-[#2355B6] text-xl font-bold text-center'>
                     Upload Photo
                 </Text>
 
-                <Text className='text-[#636F85] text-xl my-2'>ZIP CODE</Text>
-                <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4'>
+                <Text className='text-[#636F85] text-xl my-2'>Location Address</Text>
+                <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4'>
                     <Ionicons name="location-sharp" size={26} color="black" />
                     <TextInput
-                        value=''
-                        placeholder="e.g. 90210"
+                        className='text-lg flex-1'
+                        placeholder="Gulshan 1, Dhaka 1200"
                     />
                 </View>
                 <Text className='text-[#636F85] text-xl my-2 mt-6'>Referral Code</Text>
@@ -112,6 +82,7 @@ const ProfileSetup = () => {
                     <MaterialCommunityIcons name="account" size={26} color="black" />
                     <TextInput
                         value=''
+                        className='text-lg flex-1'
                         placeholder="Enter Referral Code (Optional)"
                     />
                 </View>
@@ -140,68 +111,12 @@ const ProfileSetup = () => {
                     <Fontisto name="arrow-right-l" size={24} color="white" />
                 </TouchableOpacity>
             </View>
-            <Modal
-                            transparent={true}
-                            animationType="fade"
-                            visible={showSuccessModal}
-                            onRequestClose={() => setShowSuccessModal(false)}
-                        >
-                            <View style={StyleSheet.absoluteFill}>
-                                {/* Blur */}
-                                <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-            
-                                {/* Extra dim layer to make Android look closer to iOS */}
-                                <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.60)]'>
-            
-                                    {/* Content */}
-                                    <View className="flex-1 justify-center items-center px-10">
-                                        <View className="w-full max-w-[350px]">
-                                            <View className="bg-white rounded-3xl p-10 items-center shadow-2xl">
-                                                <View className="mt-6">
-                                                    <Image source={Images.Success} resizeMode="contain" />
-                                                </View>
-            
-                                                <Text className="text-3xl font-bold text-center mt-8 mb-8">
-                                                    Successful!
-                                                </Text>
-            
-                                                <Text className="text-xl text-[#636F85] text-center mb-8 leading-6">
-                                       
-                                        Your profile has been set up successfully.
-                                                </Text>
-            
-                                                {/* Spinner */}
-                                                <View className="w-16 h-16 my-8 items-center justify-center">
-                                                    {spinnerDots.map((dot, index) => {
-                                                        const angle = (dot.angle + spinnerRotation) * (Math.PI / 180);
-                                                        const radius = 20;
-                                                        const x = Math.cos(angle) * radius;
-                                                        const y = Math.sin(angle) * radius;
-            
-                                                        return (
-                                                            <View
-                                                                key={index}
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    width: dot.size,
-                                                                    height: dot.size,
-                                                                    borderRadius: dot.size / 2,
-                                                                    backgroundColor: '#2355B6',
-                                                                    opacity: dot.opacity,
-                                                                    transform: [{ translateX: x }, { translateY: y }],
-                                                                }}
-                                                            />
-                                                        );
-                                                    })}
-                                                </View> 
-            
-            
-                                            </View>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-                        </Modal>
+            <SuccessModal
+                visible={showSuccessModal}
+                title="Successful!"
+                description="Your profile has been set up successfully."
+                onClose={() => setShowSuccessModal(false)}
+            />
         </SafeAreaView>
     )
 }

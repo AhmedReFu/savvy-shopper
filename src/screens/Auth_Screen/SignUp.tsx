@@ -3,7 +3,7 @@ import { Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
@@ -25,7 +25,7 @@ const SignUp = () => {
 
     return (
         <SafeAreaView className='bg-[#F9F9FB] flex-1' >
-            <View>
+            <View className=' px-5'>
                 <View style={styles.logoContainer}>
                     <Image
                         source={Images.Logo}
@@ -33,15 +33,15 @@ const SignUp = () => {
                         resizeMode="contain"
                     />
                 </View>
-                <View className=' px-5'>
+                <ScrollView showsVerticalScrollIndicator={false} >
                     <Text className='text-3xl font-bold'>Sign up</Text>
                     <Text className='text-xl text-[#636F85] my-2'>Welcome, let's get you signed up.
                     </Text>
                     <Text style={styles.label}>Full Name </Text>
-                    <View style={styles.passwordContainer} className='border'>
+                    <View style={styles.passwordContainer} className='border gap-4'>
                         <FontAwesome name="user" size={24} color="#334155" />
                         <TextInput
-                            style={styles.input}
+                            className='text-xl flex-1'
                             placeholder="Your Name ex: Ahmed ReFat"
                             placeholderTextColor="#A0A0A0"
                             value={name}
@@ -49,10 +49,10 @@ const SignUp = () => {
                         />
                     </View>
                     <Text style={styles.label}>Email address </Text>
-                    <View style={styles.passwordContainer} className='border'>
+                    <View style={styles.passwordContainer} className='border gap-4'>
                         <MaterialIcons name="email" size={24} color="#334155" />
                         <TextInput
-                            style={styles.input}
+                            className='text-xl flex-1'
                             placeholder="Your email ex: yourmail@gamil.com"
                             placeholderTextColor="#A0A0A0"
                             value={email}
@@ -62,10 +62,10 @@ const SignUp = () => {
                         />
                     </View>
                     <Text style={styles.label}>Password</Text>
-                    <View style={styles.passwordContainer} className='border'>
+                    <View style={styles.passwordContainer} className='border gap'>
                         <Entypo name="lock" size={24} color="#334155" />
                         <TextInput
-                            style={styles.passwordInput}
+                            className='text-xl flex-1'
                             placeholder="****************"
                             placeholderTextColor="#A0A0A0"
                             value={password}
@@ -96,7 +96,7 @@ const SignUp = () => {
                             <Image className='h-16 w-52' source={Images.Apple} resizeMode='stretch' />
                         </TouchableOpacity>
                     </View>
-                    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap" }}>
+                    <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap" }} className='mb-10'>
                         <Text style={{ fontSize: 18 }}>Already have an account? </Text>
 
                         <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
@@ -104,7 +104,7 @@ const SignUp = () => {
                         </TouchableOpacity>
                     </View>
 
-                </View>
+                </ScrollView>
 
             </View>
 
@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 16,
+        marginRight: 10,
         fontSize: 16,
         color: '#636F85',
     },

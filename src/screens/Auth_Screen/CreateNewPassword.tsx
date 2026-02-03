@@ -1,12 +1,12 @@
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BlurView } from 'expo-blur';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, Image, Keyboard, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
+import SuccessModal from '../../components/SuccessModal';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
 
@@ -22,42 +22,22 @@ const CreateNewPassword = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [spinnerRotation, setSpinnerRotation] = useState(0);
 
 
     useEffect(() => {
-        let spinnerInterval: NodeJS.Timeout | undefined;
+        if (!showSuccessModal) return;
 
-        if (showSuccessModal) {
-            Keyboard.dismiss();
-            spinnerInterval = setInterval(() => {
-                setSpinnerRotation((prev) => (prev + 45) % 360);
-            }, 150);
-        } else {
-            setSpinnerRotation(0);
-        }
+        const t = setTimeout(() => {
+            setShowSuccessModal(false);
+            navigation.reset({
+                index: 0,
+                routes: [{ name: "SignIn" }],
+            });
+        }, 5000); 
 
-        return () => {
-            if (spinnerInterval) clearInterval(spinnerInterval);
-        };
-    }, [showSuccessModal]);
+        return () => clearTimeout(t);
+    }, [showSuccessModal, navigation]);
 
-    const spinnerDots = [
-        { angle: 0, size: 12, opacity: 1 },
-        { angle: 45, size: 11, opacity: 0.9 },
-        { angle: 90, size: 10, opacity: 0.8 },
-        { angle: 135, size: 9, opacity: 0.6 },
-        { angle: 180, size: 8, opacity: 0.4 },
-        { angle: 225, size: 7, opacity: 0.3 },
-        { angle: 270, size: 6, opacity: 0.2 },
-        { angle: 315, size: 6, opacity: 0.1 },
-    ];
-
-    if (showSuccessModal) {
-        setInterval(() => {
-            navigation.navigate("SignIn")
-        }, 5000);
-    }
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
@@ -117,67 +97,13 @@ const CreateNewPassword = () => {
                     </TouchableOpacity>
                 </View>
             </View>
-            <Modal
-                transparent={true}
-                animationType="fade"
+
+            <SuccessModal
                 visible={showSuccessModal}
-                onRequestClose={() => setShowSuccessModal(false)}
-            >
-                <View style={StyleSheet.absoluteFill}>
-                    {/* Blur */}
-                    <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-
-                    {/* Extra dim layer to make Android look closer to iOS */}
-                    <View className='flex-1 items-center justify-center bg-[rgba(0,0,0,0.8)]'>
-
-                        {/* Content */}
-                        <View className="flex-1 justify-center items-center px-10">
-                            <View className="w-full max-w-[350px]">
-                                <View className="bg-white rounded-3xl p-10 items-center shadow-2xl">
-                                    <View className="mt-6">
-                                        <Image source={Images.Success} resizeMode="contain" />
-                                    </View>
-
-                                    <Text className="text-3xl font-bold text-center mt-8 mb-8">
-                                        Successful!
-                                    </Text>
-
-                                    <Text className="text-xl text-[#636F85] text-center mb-8 leading-6">
-                                        Your Password was change successfully
-                                    </Text>
-
-                                    {/* Spinner */}
-                                    <View className="w-16 h-16 my-8 items-center justify-center">
-                                        {spinnerDots.map((dot, index) => {
-                                            const angle = (dot.angle + spinnerRotation) * (Math.PI / 180);
-                                            const radius = 20;
-                                            const x = Math.cos(angle) * radius;
-                                            const y = Math.sin(angle) * radius;
-
-                                            return (
-                                                <View
-                                                    key={index}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        width: dot.size,
-                                                        height: dot.size,
-                                                        borderRadius: dot.size / 2,
-                                                        backgroundColor: '#2355B6',
-                                                        opacity: dot.opacity,
-                                                        transform: [{ translateX: x }, { translateY: y }],
-                                                    }}
-                                                />
-                                            );
-                                        })}
-                                    </View>
-
-
-                                </View>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                title="Successful!"
+                description="Your password is change successfully"
+                onClose={() => setShowSuccessModal(false)}
+            />
 
         </SafeAreaView>
     )

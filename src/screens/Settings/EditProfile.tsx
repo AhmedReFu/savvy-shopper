@@ -29,11 +29,17 @@ const EditProfile = () => {
     };
 
 
-    if (showSuccessModal) {
-        setInterval(() => {
-            setShowSuccessModal(false)
-        }, 5000);
-    }
+        useEffect(() => {
+            if (!showSuccessModal) return;
+    
+            const t = setTimeout(() => {
+                setShowSuccessModal(false);
+                navigation.goBack()
+            }, 5000); 
+    
+            return () => clearTimeout(t);
+        }, [showSuccessModal, navigation]);
+    
     const interests = [
         "Grocery", "Electronics", "Pets", "Home", "Beauty", "Fashion", "Automotive"
     ]
@@ -77,7 +83,7 @@ const EditProfile = () => {
                     <View className='items-center my-2'>
                         <MaterialCommunityIcons name="account-circle" size={120} color="#E3E3E9" />
                     </View>
-                    <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-64
+                    <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-60
                   bottom-6 border border-white rounded-full' />
                 </View>
                 <Text className='text-[#636F85] font-bold text-xl my-2'>Full Name </Text>

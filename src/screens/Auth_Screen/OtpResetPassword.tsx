@@ -1,12 +1,9 @@
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BlurView } from 'expo-blur';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Dimensions,
     Image,
-    Keyboard,
-    Modal,
     StyleSheet,
     Text,
     TextInput,
@@ -31,7 +28,7 @@ const OtpResetPassword = () => {
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [timer, setTimer] = useState(60);
 
-    const [spinnerRotation, setSpinnerRotation] = useState(0);
+
     const [isVerifying, setIsVerifying] = useState(false);
 
     const inputsRef = useRef<TextInput[]>([]);
@@ -47,23 +44,7 @@ const OtpResetPassword = () => {
         return () => clearInterval(t);
     }, [timer]);
 
-    // Spinner rotation only when modal visible
-    useEffect(() => {
-        let spinnerInterval: NodeJS.Timeout | undefined;
 
-        if (showSuccessModal) {
-            Keyboard.dismiss();
-            spinnerInterval = setInterval(() => {
-                setSpinnerRotation((prev) => (prev + 45) % 360);
-            }, 150);
-        } else {
-            setSpinnerRotation(0);
-        }
-
-        return () => {
-            if (spinnerInterval) clearInterval(spinnerInterval);
-        };
-    }, [showSuccessModal]);
 
     const handleChange = (text: string, index: number) => {
         const numericText = text.replace(/[^0-9]/g, '');
@@ -97,13 +78,6 @@ const OtpResetPassword = () => {
 
     const handleSubmit = async (enteredCode: string) => {
 
-        setIsVerifying(true);
-        setShowSuccessModal(true);
-        setTimeout(() => {
-            setIsVerifying(false);
-            setShowSuccessModal(false);
-            (navigation as any).navigate("ProfileSetup")
-        }, 5000);
     };
 
     const handleVerifyPress = () => {
@@ -120,16 +94,7 @@ const OtpResetPassword = () => {
         return `${mm}:${ss}`;
     };
 
-    const spinnerDots = [
-        { angle: 0, size: 12, opacity: 1 },
-        { angle: 45, size: 11, opacity: 0.9 },
-        { angle: 90, size: 10, opacity: 0.8 },
-        { angle: 135, size: 9, opacity: 0.6 },
-        { angle: 180, size: 8, opacity: 0.4 },
-        { angle: 225, size: 7, opacity: 0.3 },
-        { angle: 270, size: 6, opacity: 0.2 },
-        { angle: 315, size: 6, opacity: 0.1 },
-    ];
+
 
     const canResend = timer <= 0;
 
@@ -213,9 +178,6 @@ const OtpResetPassword = () => {
                     </TouchableOpacity>
                 </View>
             </View>
-
-            {/* ✅ Real Blur Modal (iOS + Android) */}
-
         </SafeAreaView>
     );
 };
