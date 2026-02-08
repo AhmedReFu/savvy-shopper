@@ -1,10 +1,10 @@
-import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     Dimensions,
     Image,
-    Platform,
     StyleSheet,
     Text,
     TextInput,
@@ -13,25 +13,34 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
+import { IPA_BASE, OTP_AUTH } from '@env';
+import axios from 'axios';
 import { AuthStackParamList } from '../../Navigation/types';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
 import SuccessModal from '../../components/SuccessModal';
 import { Images } from '../../constants';
 
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = OTP_AUTH;
+
 const { width, height } = Dimensions.get('window');
 
-type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
+interface RouteParams {
+    email?: string;
+}
+
 
 const OtpAuth = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const route = useRoute();
+    const params = route.params as RouteParams;
 
-    const isAndroid = Platform.OS === 'android';
+
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [timer, setTimer] = useState(60);
-
     const [isVerifying, setIsVerifying] = useState(false);
 
     const inputsRef = useRef<TextInput[]>([]);
@@ -39,57 +48,97 @@ const OtpAuth = () => {
     useEffect(() => {
         inputsRef.current = inputsRef.current.slice(0, 4);
     }, []);
-    // Countdown timer
+
     useEffect(() => {
         if (timer <= 0) return;
         const t = setInterval(() => setTimer((prev) => prev - 1), 1000);
         return () => clearInterval(t);
     }, [timer]);
 
-    // Spinner rotation only when modal visible
-
-
     const handleChange = (text: string, index: number) => {
         const numericText = text.replace(/[^0-9]/g, '');
         const newCode = [...code];
         newCode[index] = numericText;
         setCode(newCode);
-        // Move to next input
+
         if (numericText && index < 3) {
             setTimeout(() => inputsRef.current[index + 1]?.focus(), 10);
         }
-        // Auto-submit when last digit entered
-        if (numericText && index === 3) {
-            const enteredCode = newCode.join('');
-            if (enteredCode.length === 4) {
-                handleSubmit(enteredCode);
 
-            }
-        }
+
+        // if (numericText && index === 3) {
+        //     const enteredCode = newCode.join('');
+        //     if (enteredCode.length === 4) handleSubmit(enteredCode);
+        // }
     };
 
     const handleKeyPress = (e: any, index: number) => {
         if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
-            const newCode = [...code];
-            newCode[index - 1] = '';
-            setCode(newCode);
             setTimeout(() => inputsRef.current[index - 1]?.focus(), 10);
         }
     };
 
     const handleSubmit = async (enteredCode: string) => {
-        setIsVerifying(true);
-        setShowSuccessModal(true);
-        setTimeout(() => {
+
+        if (!params?.email) {
+            Alert.alert('Error', 'Email missing. Please go back and try again.');
+            return;
+        }
+        if (enteredCode.length !== 4) {
+            Alert.alert('Error', 'Please enter the full 4-digit OTP.');
+            return;
+        }
+        console.log(`${API_BASE_URL}${END_POINTS}`)
+        try {
+            setIsVerifying(true);
+
+            const res = await axios.post(
+                `${API_BASE_URL}${END_POINTS}`,
+                {
+                    email: params.email,
+                    otp: enteredCode,
+                },
+                {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000,
+                }
+            );
+
+            const data = res.data;
+            if (data?.success === true) {
+                setShowSuccessModal(true);
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                    (navigation as any).navigate('ProfileSetup', {
+                        email: params.email
+                    } as any);
+                }, 1500);
+            } else {
+                const msg = data?.message || 'Invalid OTP';
+                Alert.alert('OTP Failed', msg);
+                setCode(['', '', '', '']);
+                setTimeout(() => inputsRef.current[0]?.focus(), 50);
+            }
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message ||
+                e?.message ||
+                'Something went wrong';
+
+            Alert.alert('OTP Failed', msg);
+            setCode(['', '', '', '']);
+            setTimeout(() => inputsRef.current[0]?.focus(), 50);
+        } finally {
             setIsVerifying(false);
-            setShowSuccessModal(false);
-            (navigation as any).navigate("ProfileSetup")
-        }, 5000);
+        }
     };
 
     const handleVerifyPress = () => {
         const entered = code.join('');
-        if (entered.length !== 4) return;
+        if (entered.length !== 4) {
+            Alert.alert('Error', 'Please enter the full 4-digit OTP.');
+            return;
+        }
         handleSubmit(entered);
     };
 
@@ -99,8 +148,6 @@ const OtpAuth = () => {
         const ss = String(s % 60).padStart(2, '0');
         return `${mm}:${ss}`;
     };
-
-
 
     const canResend = timer <= 0;
 
@@ -146,6 +193,7 @@ const OtpAuth = () => {
                                 onKeyPress={(e) => handleKeyPress(e, index)}
                                 selectTextOnFocus
                                 autoFocus={index === 0}
+                                editable={!isVerifying}
                             />
                         ))}
                     </View>
@@ -173,13 +221,19 @@ const OtpAuth = () => {
                     </View>
 
                     <TouchableOpacity
-                        style={styles.mainButton}
+                        style={[styles.mainButton, { opacity: isVerifying ? 0.7 : 1 }]}
                         onPress={handleVerifyPress}
                         activeOpacity={0.9}
+                        disabled={isVerifying}
                     >
-                        <Text style={styles.mainButtonText}>
-                            {isVerifying ? 'Verifying...' : 'Verify OTP'}
-                        </Text>
+                        {isVerifying ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <ActivityIndicator color="#fff" />
+                                <Text style={[styles.mainButtonText, { marginLeft: 10 }]}>Verifying...</Text>
+                            </View>
+                        ) : (
+                            <Text style={styles.mainButtonText}>Verify OTP</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>

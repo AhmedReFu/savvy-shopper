@@ -1,0 +1,17 @@
+declare module "@env" {
+  export const IPA_BASE: string;
+  export const API_BASE_URL: string;
+  export const API_TIMEOUT: string;
+  export const ENVIRONMENT: string;
+  export const LOGIN: string;
+  export const REFRESH_TOKEN: string;
+  export const REGISTER: string;
+  export const IMAGE_UPLOAD: string;
+  export const OTP_AUTH: string;
+  export const FORGOT_PASSWORD: string;
+  export const LOG_OUT: string;
+  export const RESEND_OTP: string;
+  export const RESET_PASSWORD: string;
+  export const PAYMENT_REQUIRED: string;
+  export const PROFILE_UPDATE: string;
+}

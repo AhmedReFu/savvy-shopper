@@ -5,7 +5,7 @@ import AppHeader from '../../components/AppHeader'
 import BackButton from '../../components/BackButton'
 
 const NotificationSettings = () => {
-    const [isEnabled, setIsEnabled] = useState(true);
+    const [isEnabled, setIsEnabled] = useState(false);
     const toggleSwitch = () => setIsEnabled(previousState => !previousState);
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">

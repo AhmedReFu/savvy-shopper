@@ -88,7 +88,7 @@ export default function MainTabs() {
                         <View style={styles.tabItem}>
                             <MaterialCommunityIcons name={focused ? "view-dashboard" : "view-dashboard-outline"} size={22} color={focused ? "#2563EB" : "#9CA3AF"} />
                             <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-                                Menu
+                                Dashboard
                             </Text>
                         </View>
                     ),

@@ -3,16 +3,34 @@
     "name": "DEALNUX",
     "slug": "savvy-shopper",
     "version": "1.0.0",
+    "scheme": "savvyshopper",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs camera access to scan product barcodes and QR codes.",
-        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload product images."
-      }
+        "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload product images.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
+          },
+          {
+            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
+          }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.ahmedrefu.savvyshopper"
     },
     "android": {
       "softwareKeyboardLayoutMode": "pan",
@@ -23,11 +41,9 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
       ],
       "package": "com.ahmedrefu.savvyshopper"
     },
@@ -36,13 +52,30 @@
     },
     "plugins": [
       [
+        "expo-apple-authentication"
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan product barcodes and QR codes."
         }
       ],
-      "expo-font"
-      
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to set profile picture."
+        }
+      ],
+      "expo-font",
+      [
+        "react-native-fbsdk-next",
+        {
+          "appID": "25870171595935078",
+          "clientToken": "dcb2b543991b7644bad597d84bec3e14",
+          "displayName": "DEALNUX",
+          "scheme": "fb25870171595935078"
+        }
+      ]
     ],
     "extra": {
       "eas": {

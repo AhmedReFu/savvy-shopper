@@ -1,11 +1,13 @@
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import React, { useState } from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
+
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,6 +23,59 @@ const SignIn = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [agreeToTerms, setAgreeToTerms] = useState(true);
 
+    const handleAppleSignIn = async () => {
+        try {
+            if (Platform.OS !== 'ios') {
+                Alert.alert('Apple Sign-In', 'Apple Sign-In is available on iOS only.');
+                return;
+            }
+
+            const available = await AppleAuthentication.isAvailableAsync();
+            if (!available) {
+                Alert.alert('Apple Sign-In', 'Apple Sign-In is not available on this device.');
+                return;
+            }
+
+            const credential = await AppleAuthentication.signInAsync({
+                requestedScopes: [
+                    AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                    AppleAuthentication.AppleAuthenticationScope.EMAIL,
+                ],
+            });
+            console.log(credential)
+            // ✅ identityToken is what you send to backend
+            const identityToken = credential.identityToken;
+            // console.log(identityToken)
+            if (!identityToken) {
+                Alert.alert('Apple Sign-In', 'identityToken not found. Please try again.');
+                return;
+            }
+
+            // ✅ Send to backend
+            const res = await fetch('https://agen-backend-office.vercel.app/api/v1/auth/appleLogin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    identityToken
+                }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                Alert.alert('Login Failed', data?.message || 'Apple login failed');
+                return;
+            }
+
+            // ✅ Example: navigate after success
+            navigation.navigate("MainTabs");
+
+        } catch (e: any) {
+            // user canceled
+            if (e?.code === 'ERR_REQUEST_CANCELED') return;
+            Alert.alert('Apple Sign-In Error', e?.message || 'Something went wrong');
+        }
+    };
 
     return (
         <SafeAreaView className='flex-1 bg-[#F9F9FB] ' >
@@ -100,42 +155,11 @@ const SignIn = () => {
                     <View className='flex-row justify-between my-2'>
                         <TouchableOpacity >
                             <Image className='h-16 w-52' source={Images.Google} resizeMode='stretch' />
-                            {/* <LoginButton
-                                onLoginFinished={(error, result) => {
-                                    if (error) {
-                                        console.log("Login error:", error);
-                                    } else if (result.isCancelled) {
-                                        console.log("Login cancelled");
-                                    } else {
-                                        AccessToken.getCurrentAccessToken().then(async data => {
-                                            if (!data) return;
 
-                                            try {
-                                                const response = await fetch(
-                                                    "https://agen-backend-office.vercel.app/api/v1/auth/facebook",
-                                                    {
-                                                        method: "POST",
-                                                        headers: {
-                                                            "Content-Type": "application/json",
-                                                        },
-                                                        body: JSON.stringify({
-                                                            accessToken: data.accessToken,
-                                                        }),
-                                                    }
-                                                );
-
-                                                const json = await response.json();
-                                                console.log("Backend login success:", json);
-                                            } catch (err) {
-                                                console.log("API error:", err);
-                                            }
-                                        });
-                                    }
-                                }}
-                                onLogoutFinished={() => console.log("Logged out")}
-                            /> */}
                         </TouchableOpacity>
-                        <TouchableOpacity >
+
+
+                        <TouchableOpacity onPress={handleAppleSignIn}>
                             <Image className='h-16 w-52' source={Images.Apple} resizeMode='stretch' />
                         </TouchableOpacity>
                     </View>
@@ -189,8 +213,8 @@ const styles = StyleSheet.create({
         marginTop: 16,
         marginBottom: 16,
     },
-    
-    
+
+
     rememberMeText: {
         fontSize: 16,
         color: '#666666',
@@ -242,7 +266,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 16,
-        
+
     },
 
     termsContainer: {

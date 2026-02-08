@@ -1,16 +1,18 @@
-
+import { IPA_BASE, REGISTER } from '@env';
 import { Entypo, FontAwesome, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import axios from 'axios';
 import React, { useState } from 'react';
-import { Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
 
 const { width, height } = Dimensions.get('window');
 
-type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
+const API_BASE_URL = IPA_BASE
+const END_POINTS = REGISTER
+
 
 const SignUp = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
@@ -18,26 +20,68 @@ const SignUp = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const [agreeToTerms, setAgreeToTerms] = useState(true);
 
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const validate = () => {
+        if (!name.trim()) return 'Name required';
+        if (!email.trim()) return 'Email required';
+        if (!password) return 'Password required';
+        if (password.length < 6) return 'Password must be at least 6 characters';
+        return null;
+    };
+
+    const handleSignUp = async () => {
+        const err = validate();
+        if (err) {
+            Alert.alert('Error', err);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await axios.post(
+                `${API_BASE_URL}${END_POINTS}`,
+                {
+                    name: name.trim(),
+                    email: email.trim().toLowerCase(),
+                    password: password,
+                },
+                {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000,
+                }
+            );
+            const data = res.data;
+            Alert.alert('Success', data?.message ?? 'Account created');
+            navigation.navigate('OtpAuth', {
+                email: email.trim().toLowerCase(),
+            } as any);
+
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message ||
+                e?.message ||
+                'Something went wrong';
+            Alert.alert('Sign up failed', msg);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <SafeAreaView className='bg-[#F9F9FB] flex-1' >
+        <SafeAreaView className='bg-[#F9F9FB] flex-1'>
             <View className=' px-5'>
                 <View style={styles.logoContainer}>
-                    <Image
-                        source={Images.Logo}
-                        style={styles.logoImage}
-                        resizeMode="contain"
-                    />
+                    <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
                 </View>
-                <ScrollView showsVerticalScrollIndicator={false} >
+
+                <ScrollView showsVerticalScrollIndicator={false}>
                     <Text className='text-3xl font-bold'>Sign up</Text>
-                    <Text className='text-xl text-[#636F85] my-2'>Welcome, let's get you signed up.
-                    </Text>
-                    <Text style={styles.label}>Full Name </Text>
+                    <Text className='text-xl text-[#636F85] my-2'>Welcome, let's get you signed up.</Text>
+
+                    <Text style={styles.label}>Full Name</Text>
                     <View style={styles.passwordContainer} className='border gap-4'>
                         <FontAwesome name="user" size={24} color="#334155" />
                         <TextInput
@@ -48,7 +92,8 @@ const SignUp = () => {
                             onChangeText={setName}
                         />
                     </View>
-                    <Text style={styles.label}>Email address </Text>
+
+                    <Text style={styles.label}>Email address</Text>
                     <View style={styles.passwordContainer} className='border gap-4'>
                         <MaterialIcons name="email" size={24} color="#334155" />
                         <TextInput
@@ -61,6 +106,7 @@ const SignUp = () => {
                             autoCapitalize="none"
                         />
                     </View>
+
                     <Text style={styles.label}>Password</Text>
                     <View style={styles.passwordContainer} className='border gap'>
                         <Entypo name="lock" size={24} color="#334155" />
@@ -73,13 +119,18 @@ const SignUp = () => {
                             secureTextEntry={!showPassword}
                         />
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <Ionicons name="eye-outline" size={24} color="black" /> : <Ionicons name="eye-off-outline" size={24} color="black" />}
+                            {showPassword
+                                ? <Ionicons name="eye-outline" size={24} color="black" />
+                                : <Ionicons name="eye-off-outline" size={24} color="black" />}
                         </TouchableOpacity>
                     </View>
 
-
-                    <TouchableOpacity style={styles.mainButton} onPress={() => navigation.navigate("OtpAuth")}>
-                        <Text style={styles.mainButtonText}>Sign Up</Text>
+                    <TouchableOpacity
+                        style={[styles.mainButton, { opacity: loading ? 0.7 : 1 }]}
+                        disabled={loading}
+                        onPress={handleSignUp}
+                    >
+                        {loading ? <ActivityIndicator /> : <Text style={styles.mainButtonText}>Sign Up</Text>}
                     </TouchableOpacity>
 
                     <View style={styles.dividerContainer}>
@@ -89,148 +140,78 @@ const SignUp = () => {
                     </View>
 
                     <View className='flex-row justify-between my-2'>
-                        <TouchableOpacity >
-                            <Image className='h-16 w-52' source={Images.Google} resizeMode='stretch'/>
+                        <TouchableOpacity>
+                            <Image className='h-16 w-52' source={Images.Google} resizeMode='stretch' />
                         </TouchableOpacity>
-                        <TouchableOpacity >
+                        <TouchableOpacity>
                             <Image className='h-16 w-52' source={Images.Apple} resizeMode='stretch' />
                         </TouchableOpacity>
                     </View>
+
                     <View style={{ flexDirection: "row", justifyContent: "center", flexWrap: "wrap" }} className='mb-10'>
                         <Text style={{ fontSize: 18 }}>Already have an account? </Text>
-
                         <TouchableOpacity onPress={() => navigation.navigate("SignIn")}>
                             <Text style={{ fontSize: 18, color: "red" }}>Sign In</Text>
                         </TouchableOpacity>
                     </View>
-
                 </ScrollView>
-
             </View>
-
-
-        </SafeAreaView >
-    )
-}
+        </SafeAreaView>
+    );
+};
 
 export default SignUp;
 
 const styles = StyleSheet.create({
-
-
     logoContainer: {
         alignItems: 'center',
-        paddingTop: height * 0.02,
-    },
-    logoImage: {
-        width: width * 0.6,
-        height: height * 0.2,
+        paddingTop: height * 0.02
     },
 
+    logoImage: {
+        width: width * 0.6,
+        height: height * 0.2
+    },
     label: {
         fontSize: 16,
         fontWeight: '600',
         color: '#636F85',
         marginBottom: 8,
-        marginTop: 16,
-    },
-    input: {
-        backgroundColor: '#F5F5F5',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        marginRight: 10,
-        fontSize: 16,
-        color: '#636F85',
-    },
-    optionsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 16,
-        marginBottom: 16,
-    },
-
-
-    rememberMeText: {
-        fontSize: 16,
-        color: '#666666',
-    },
-    forgotPassword: {
-        fontSize: 16,
-        color: '#E74C3C',
+        marginTop: 16
     },
     mainButton: {
         backgroundColor: '#2355B6',
         borderRadius: 12,
         paddingVertical: 18,
         alignItems: 'center',
-        marginTop:16,
+        marginTop: 16
     },
     mainButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#FFFFFF',
+        color: '#FFFFFF'
     },
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginVertical: 16,
+        marginVertical: 16
     },
     divider: {
         flex: 1,
         height: 1,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: '#E0E0E0'
     },
     orText: {
         fontSize: 16,
         color: '#666666',
-        marginHorizontal: 16,
+        marginHorizontal: 16
     },
-
     passwordContainer: {
         backgroundColor: '#F5F5F5',
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 4,
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'center'
     },
-    passwordInput: {
-        flex: 1,
-        fontSize: 16,
-        color: '#636F85',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-
-    },
-
-    termsContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginTop: 20,
-        marginBottom: 24,
-    },
-    checkboxSquare: {
-        width: 22,
-        height: 22,
-        borderRadius: 6,
-        borderWidth: 2,
-        borderColor: '#1A4D5C',
-        marginRight: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 2,
-    },
-    checkboxSquareChecked: {
-        backgroundColor: '#2355B6',
-    },
-    checkmark: {
-        color: '#FFFFFF',
-        fontSize: 14,
-        fontWeight: '700',
-    },
-
-
 });
