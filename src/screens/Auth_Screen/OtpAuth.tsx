@@ -37,7 +37,7 @@ const OtpAuth = () => {
     const route = useRoute();
     const params = route.params as RouteParams;
 
-
+    const email = params.email
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [timer, setTimer] = useState(60);
@@ -88,7 +88,7 @@ const OtpAuth = () => {
             Alert.alert('Error', 'Please enter the full 4-digit OTP.');
             return;
         }
-        console.log(`${API_BASE_URL}${END_POINTS}`)
+
         try {
             setIsVerifying(true);
 
@@ -109,8 +109,8 @@ const OtpAuth = () => {
                 setShowSuccessModal(true);
                 setTimeout(() => {
                     setShowSuccessModal(false);
-                    (navigation as any).navigate('ProfileSetup', {
-                        email: params.email
+                    navigation.navigate('ProfileSetup', {
+                        email: params.email,
                     } as any);
                 }, 1500);
             } else {

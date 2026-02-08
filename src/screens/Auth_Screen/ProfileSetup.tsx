@@ -1,4 +1,4 @@
-import { IPA_BASE, PROFILE_UPDATE } from '@env'
+import { IPA_BASE, PROFILE_SETUP } from '@env'
 import { Fontisto, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons'
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -12,13 +12,10 @@ import BackButton from '../../components/BackButton'
 import SuccessModal from '../../components/SuccessModal'
 import { AuthStackParamList } from '../../Navigation/types'
 
-const API_BASE_URL = IPA_BASE;
-const END_POINTS = PROFILE_UPDATE;
-const INTERESTS = ['Grocery', 'Electronics', 'Pets', 'Home', 'Beauty', 'Fashion', 'Automotive'];
-const SUCCESS_REDIRECT_DELAY = 5000;
-
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = PROFILE_SETUP;
 interface RouteParams {
     email?: string;
 }
@@ -26,11 +23,12 @@ interface RouteParams {
 const ProfileSetup = () => {
     const navigation = useNavigation<NavigationProp<AuthNavProp>>();
     const route = useRoute();
-    const params = route.params as RouteParams;
 
+    const params = route.params as RouteParams;
     const [interestsItem, setInterestsItem] = useState<string[]>([]);
-    const [image, setImage] = useState<ImagePicker.ImagePickerResult | null>(null);
-    const [address, setAddress] = useState('');
+    const [image, setImage] = useState<any>(null);
+    const [address, setAddress] = useState<string>('');
+    const [referCode, setReFerCode] = useState<string>('');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const toggle = (item: string) => {
@@ -42,7 +40,9 @@ const ProfileSetup = () => {
     };
 
     const pickImage = async () => {
+
         const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
         if (!permissionResult.granted) {
             Alert.alert('Permission required', 'Permission to access the media library is required.');
             return;
@@ -50,48 +50,89 @@ const ProfileSetup = () => {
 
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
         });
 
         setImage(result);
+
     };
     const handleSubmit = async () => {
-        const payload = {
-            email: params.email,
-            interests: interestsItem,
-            address,
-            profile_picture: image
-        };
+        if (!image || image.canceled || !image.assets?.[0]) {
+            Alert.alert('Error', 'Please select a profile picture');
+            return;
+        }
 
+        const selectedImage = image.assets[0];
+
+
+        const formData = new FormData();
+        formData.append('email', params.email || '');
+        formData.append('address', address);
+        formData.append('interests', JSON.stringify(interestsItem));
+        formData.append('refaradal_code', referCode)
+
+
+        formData.append('profile_picture', {
+            uri: selectedImage.uri,
+            type: selectedImage.mimeType || 'image/jpeg',
+            name: selectedImage.fileName || 'profile.jpg',
+        } as any);
+        console.log(formData)
         try {
             const res = await axios.post(
                 `${API_BASE_URL}${END_POINTS}`,
-                { payload },
+                formData,
                 {
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'multipart/form-data' },
                     timeout: 15000,
                 }
             );
 
-            const { data } = res;
+            const data = res.data;
             if (data?.success === true) {
                 setShowSuccessModal(true);
                 setTimeout(() => {
                     setShowSuccessModal(false);
-                    navigation.navigate('SignIn' as never);
-                }, SUCCESS_REDIRECT_DELAY);
+                    (navigation as any).navigate('SignIn' as any);
+                }, 5000);
             } else {
-                Alert.alert('Profile Set', data?.message || 'Invalid Information');
-            }
-        } catch (error: unknown) {
-            const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
-            const msg = axiosError?.response?.data?.message || axiosError?.message || 'Something went wrong';
-            Alert.alert('Profile Set Failed', msg);
-        }
-    };
+                const msg = data?.message || 'Invalid Information';
+                Alert.alert('Profile Set', msg);
 
+            }
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message ||
+                e?.message ||
+                'Something went wrong';
+
+            Alert.alert('Profile Set Failed', msg);
+
+
+        }
+    }
+
+
+
+    // useEffect(() => {
+    //     if (!showSuccessModal) return;
+
+    //     const t = setTimeout(() => {
+    //         setShowSuccessModal(false);
+    //         navigation.reset({
+    //             index: 0,
+    //             routes: [{ name: "MainTabs" as never }],
+    //         });
+    //     }, 5000);
+
+    //     return () => clearTimeout(t);
+    // }, [showSuccessModal]);
+
+
+
+
+    const interests = [
+        "Grocery", "Electronics", "Pets", "Home", "Beauty", "Fashion", "Automotive"
+    ]
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
@@ -130,23 +171,26 @@ const ProfileSetup = () => {
                 <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4'>
                     <MaterialCommunityIcons name="account" size={26} color="black" />
                     <TextInput
-                        value=''
+                        value={referCode}
+                        onChangeText={setReFerCode}
                         className='text-lg flex-1'
                         placeholder="Enter Referral Code (Optional)"
                     />
                 </View>
                 <Text className='text-xl my-5'>Interests</Text>
                 <View className='flex-row flex-wrap gap-3 my-2'>
-                    {INTERESTS.map((interest) => {
-                        const isActive = interestsItem.includes(interest);
+                    {interests.map((data, index) => {
+                        const active = interestsItem.includes(data);
+
                         return (
                             <TouchableOpacity
-                                key={interest}
-                                onPress={() => toggle(interest)}
-                                className={`border-2 rounded-full py-3 px-6 ${isActive ? 'border-[#2355B6] bg-[#EEF4FF]' : 'border-[#D1D6DB]'}`}
+                                key={index}
+                                onPress={() => toggle(data)}
+                                className={`border-2 rounded-full py-3 px-6 ${active ? "border-[#2355B6] bg-[#EEF4FF]" : "border-[#D1D6DB]"
+                                    }`}
                             >
-                                <Text className={`text-lg ${isActive ? 'text-[#2355B6] font-semibold' : ''}`}>
-                                    {interest}
+                                <Text className={`text-lg ${active ? "text-[#2355B6] font-semibold" : ""}`}>
+                                    {data}
                                 </Text>
                             </TouchableOpacity>
                         );
@@ -166,9 +210,9 @@ const ProfileSetup = () => {
             />
         </SafeAreaView>
     )
-};
+}
 
-export default ProfileSetup;
+export default ProfileSetup
 
 
 const styles = StyleSheet.create({
