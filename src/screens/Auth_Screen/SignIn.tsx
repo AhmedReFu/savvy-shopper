@@ -41,7 +41,6 @@ const SignIn = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Load remembered data on mount
     useEffect(() => {
         const loadRememberedData = async () => {
             try {
@@ -63,7 +62,7 @@ const SignIn = () => {
         loadRememberedData();
     }, []);
 
-    // Save remember me data
+
     const handleRememberMeChange = async (value: boolean) => {
         setRememberMe(value);
 
@@ -80,7 +79,6 @@ const SignIn = () => {
         }
     };
 
-    // Load remembered email on focus
     useFocusEffect(
         useCallback(() => {
             const loadRememberedEmail = async () => {
@@ -98,7 +96,6 @@ const SignIn = () => {
         }, [rememberMe]),
     );
 
-    // Keep storage synced if user edits email while rememberMe ON
     useEffect(() => {
         const syncEmail = async () => {
             try {
@@ -220,13 +217,11 @@ const SignIn = () => {
                 <View style={styles.logoContainer}>
                     <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
                 </View>
-
                 <ScrollView showsVerticalScrollIndicator={false}>
                     <Text className="text-3xl font-bold">Welcome to DEALNUX!</Text>
                     <Text className="text-xl text-[#636F85] my-4">
                         Sign in to track prices and save money.
                     </Text>
-
                     <Text style={styles.label}>Email address</Text>
                     <View style={styles.passwordContainer} className="border gap-4">
                         <MaterialIcons name="email" size={24} color="#334155" />
@@ -240,7 +235,6 @@ const SignIn = () => {
                             autoCapitalize="none"
                         />
                     </View>
-
                     <Text style={styles.label}>Password</Text>
                     <View style={styles.passwordContainer} className="border gap-4">
                         <Entypo name="lock" size={24} color="#334155" />
@@ -260,7 +254,6 @@ const SignIn = () => {
                             )}
                         </TouchableOpacity>
                     </View>
-
                     <View style={styles.optionsRow}>
                         <TouchableOpacity
                             style={styles.termsContainer}
@@ -281,7 +274,6 @@ const SignIn = () => {
                             <Text style={styles.forgotPassword}>Forgot Password</Text>
                         </TouchableOpacity>
                     </View>
-
                     <TouchableOpacity
                         style={[styles.mainButton, loading && { opacity: 0.7 }]}
                         onPress={handleSignInEmail}
@@ -291,13 +283,11 @@ const SignIn = () => {
                             {loading ? 'Signing In...' : 'Sign In'}
                         </Text>
                     </TouchableOpacity>
-
                     <View style={styles.dividerContainer}>
                         <View style={styles.divider} />
                         <Text style={styles.orText}>Or Login With</Text>
                         <View style={styles.divider} />
                     </View>
-
                     <View className="flex-row justify-between my-2">
                         <TouchableOpacity>
                             <Image className="h-16 w-52" source={Images.Google} resizeMode="stretch" />
@@ -307,7 +297,6 @@ const SignIn = () => {
                             <Image className="h-16 w-52" source={Images.Apple} resizeMode="stretch" />
                         </TouchableOpacity>
                     </View>
-
                     <View
                         style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap' }}
                         className="mb-20"

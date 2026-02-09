@@ -1,7 +1,8 @@
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    Alert,
     Dimensions,
     Image,
     StyleSheet,
@@ -12,6 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { IPA_BASE, OTP_AUTH } from '@env';
+import axios from 'axios';
 import { AuthStackParamList } from '../../Navigation/types';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
@@ -21,8 +24,19 @@ const { width, height } = Dimensions.get('window');
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
+interface RouteParams {
+    email?: string;
+}
+
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = OTP_AUTH;
+
 const OtpResetPassword = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const route = useRoute();
+    const params = route.params as RouteParams;
+
+    const email = params.email
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [code, setCode] = useState<string[]>(['', '', '', '']);
@@ -78,6 +92,55 @@ const OtpResetPassword = () => {
 
     const handleSubmit = async (enteredCode: string) => {
 
+        if (!params?.email) {
+            Alert.alert('Error', 'Email missing. Please go back and try again.');
+            return;
+        }
+        if (enteredCode.length !== 4) {
+            Alert.alert('Error', 'Please enter the full 4-digit OTP.');
+            return;
+        }
+
+        try {
+            setIsVerifying(true);
+
+            const res = await axios.post(
+                `${API_BASE_URL}${END_POINTS}`,
+                {
+                    email: params.email,
+                    otp: enteredCode,
+                },
+                {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000,
+                }
+            );
+
+            const data = res.data;
+            if (data?.success === true) {
+                setTimeout(() => {
+                    navigation.navigate('CreateNewPassword', {
+                        email: params.email,
+                    } as any);
+                }, 1500);
+            } else {
+                const msg = data?.message || 'Invalid OTP';
+                Alert.alert('OTP Failed', msg);
+                setCode(['', '', '', '']);
+                setTimeout(() => inputsRef.current[0]?.focus(), 50);
+            }
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message ||
+                e?.message ||
+                'Something went wrong';
+
+            Alert.alert('OTP Failed', msg);
+            setCode(['', '', '', '']);
+            setTimeout(() => inputsRef.current[0]?.focus(), 50);
+        } finally {
+            setIsVerifying(false);
+        }
     };
 
     const handleVerifyPress = () => {

@@ -1,8 +1,10 @@
+import { FORGOT_PASSWORD, IPA_BASE } from '@env';
 import { MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import axios from 'axios';
 import React, { useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
@@ -13,11 +15,58 @@ const { width, height } = Dimensions.get('window');
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = FORGOT_PASSWORD;
 
 const ResetPassword = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
     const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+
+
+    const hadnleResetPassword = async () => {
+        if (!email.trim()) {
+            Alert.alert('Missing info', 'Please enter email.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${API_BASE_URL}${END_POINTS}`,
+                {
+                    email: email.trim().toLowerCase(),
+                },
+                {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000,
+                },
+            );
+
+            const data = res.data;
+
+            if (data?.success === true) {
+
+                setTimeout(() => {
+
+                    navigation.navigate(
+                        'OtpResetPassword',
+                        { email: email.trim().toLowerCase() } as any,
+                    );
+                }, 1500);
+            } else {
+                Alert.alert('Reset Password failed', data?.message || 'Invalid credentials');
+            }
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message || e?.message || 'Something went wrong';
+            Alert.alert('Reset Password Failed', msg);
+        } finally {
+            setLoading(false);
+        }
+    };
 
   return (
       <SafeAreaView className="bg-[#F9F9FB] flex-1">
@@ -56,7 +105,7 @@ const ResetPassword = () => {
                   <TouchableOpacity
                       style={styles.mainButton}
                       activeOpacity={0.9}
-                      onPress={() => navigation.navigate("OtpResetPassword")}
+                      onPress={hadnleResetPassword}
                   >
                       <Text style={styles.mainButtonText}>
                           Continue

@@ -1,8 +1,9 @@
-import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
-import { Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { IPA_BASE, RESET_PASSWORD } from '@env';
+import { Entypo, Ionicons } from '@expo/vector-icons';
+import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
+import axios from 'axios';
+import React, { useMemo, useState } from 'react';
+import { Alert, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
@@ -12,32 +13,130 @@ import { AuthStackParamList } from '../../Navigation/types';
 
 const { width, height } = Dimensions.get('window');
 
-type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
+interface RouteParams {
+    email?: string;
+}
 
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = RESET_PASSWORD;
 
 const CreateNewPassword = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const route = useRoute();
+    const params = route.params as RouteParams;
 
-    const [email, setEmail] = useState('');
+    const email = params?.email?.trim()?.toLowerCase();
+
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
 
-    useEffect(() => {
-        if (!showSuccessModal) return;
+    const passwordRules = useMemo(() => {
+        return {
+            minLen: 8,
 
-        const t = setTimeout(() => {
-            setShowSuccessModal(false);
-            navigation.reset({
-                index: 0,
-                routes: [{ name: "SignIn" }],
-            });
-        }, 5000); 
+            strongRegex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
+        };
+    }, []);
 
-        return () => clearTimeout(t);
-    }, [showSuccessModal, navigation]);
+    const validate = () => {
+        if (!email) {
+            Alert.alert('Error', 'Email missing. Please go back and try again.');
+            return false;
+        }
 
+        const p = password.trim();
+        const c = confirmPassword.trim();
+
+        if (!p) {
+            Alert.alert('Validation', 'Please enter a new password.');
+            return false;
+        }
+
+        if (p.length < passwordRules.minLen) {
+            Alert.alert('Validation', `Password must be at least ${passwordRules.minLen} characters.`);
+            return false;
+        }
+        if (!passwordRules.strongRegex.test(p)) {
+            Alert.alert(
+                'Validation',
+                'Password must contain at least 1 uppercase, 1 lowercase, and 1 number.'
+            );
+            return false;
+        }
+
+        if (!c) {
+            Alert.alert('Validation', 'Please confirm your new password.');
+            return false;
+        }
+
+        if (p !== c) {
+            Alert.alert('Validation', 'Password and Confirm Password do not match.');
+            return false;
+        }
+        if (p.toLowerCase() === 'password123' || p === '12345678') {
+            Alert.alert('Validation', 'Please choose a more unique password.');
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleSubmit = async () => {
+        if (!validate()) return;
+
+        try {
+            setLoading(true);
+
+            const res = await axios.post(
+                `${API_BASE_URL}${END_POINTS}`,
+                {
+                    email,
+                    password: password.trim(),
+                    confirm_password: confirmPassword.trim(),
+                },
+                {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000,
+                }
+            );
+
+            const data = res.data;
+
+            if (data?.success === true) {
+                setShowSuccessModal(true);
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'SignIn' }],
+                    });
+                }, 1500);
+            } else {
+                const msg = data?.message || 'Password reset failed';
+                const lower = String(msg).toLowerCase();
+                if (lower.includes('previous') || lower.includes('old password') || lower.includes('same')) {
+                    Alert.alert('Validation', 'New password must be different from the previous password.');
+                } else {
+                    Alert.alert('Reset Password Failed', msg);
+                }
+            }
+        } catch (e: any) {
+            const msg = e?.response?.data?.message || e?.message || 'Something went wrong';
+
+            const lower = String(msg).toLowerCase();
+            if (lower.includes('previous') || lower.includes('old password') || lower.includes('same')) {
+                Alert.alert('Validation', 'New password must be different from the previous password.');
+            } else {
+                Alert.alert('Reset Password Failed', msg);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
@@ -51,49 +150,56 @@ const CreateNewPassword = () => {
                 <View className="mt-10 flex-1">
                     <Text className="text-3xl text-center font-bold">Create New Password</Text>
                     <Text className="text-xl text-center text-[#636F85] my-4">
-                        Your password must be different from{'\n'} previous used password.
+                        Your password must be different from{'\n'}previous used password.
                     </Text>
 
-
-                    <Text style={styles.label}>New Password </Text>
-                    <View style={styles.passwordContainer} className='border'>
-                        <MaterialIcons name="email" size={24} color="#334155" />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="demo@gmail.com"
-                            placeholderTextColor="#A0A0A0"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
-                    </View>
-
-                    <Text style={styles.label}>Confirm Password</Text>
-                    <View style={styles.passwordContainer} className='border'>
+                    <Text style={styles.label}>New Password</Text>
+                    <View style={styles.passwordContainer} className="border">
                         <Entypo name="lock" size={24} color="#334155" />
                         <TextInput
                             style={styles.passwordInput}
-                            placeholder="****************"
+                            placeholder="********"
                             placeholderTextColor="#A0A0A0"
                             value={password}
                             onChangeText={setPassword}
                             secureTextEntry={!showPassword}
                         />
                         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                            {showPassword ? <Ionicons name="eye-outline" size={24} color="black" /> : <Ionicons name="eye-off-outline" size={24} color="black" />}
+                            {showPassword ? (
+                                <Ionicons name="eye-outline" size={24} color="black" />
+                            ) : (
+                                <Ionicons name="eye-off-outline" size={24} color="black" />
+                            )}
                         </TouchableOpacity>
                     </View>
 
+                    <Text style={styles.label}>Confirm Password</Text>
+                    <View style={styles.passwordContainer} className="border">
+                        <Entypo name="lock" size={24} color="#334155" />
+                        <TextInput
+                            style={styles.passwordInput}
+                            placeholder="********"
+                            placeholderTextColor="#A0A0A0"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry={!showPassword}
+                        />
+                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            {showPassword ? (
+                                <Ionicons name="eye-outline" size={24} color="black" />
+                            ) : (
+                                <Ionicons name="eye-off-outline" size={24} color="black" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
 
                     <TouchableOpacity
-                        style={styles.mainButton}
+                        style={[styles.mainButton, loading && { opacity: 0.7 }]}
                         activeOpacity={0.9}
-                        onPress={() => setShowSuccessModal(true)}
+                        onPress={handleSubmit}
+                        disabled={loading}
                     >
-                        <Text style={styles.mainButtonText}>
-                            Continue
-                        </Text>
+                        <Text style={styles.mainButtonText}>{loading ? 'Please wait...' : 'Continue'}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -101,13 +207,12 @@ const CreateNewPassword = () => {
             <SuccessModal
                 visible={showSuccessModal}
                 title="Successful!"
-                description="Your password is change successfully"
+                description="Your password was changed successfully."
                 onClose={() => setShowSuccessModal(false)}
             />
-
         </SafeAreaView>
-    )
-}
+    );
+};
 
 export default CreateNewPassword;
 
@@ -119,29 +224,6 @@ const styles = StyleSheet.create({
     logoImage: {
         width: width * 0.4,
         height: height * 0.1,
-    },
-    otpInput: {
-        width: 64,
-        height: 64,
-        textAlign: 'center',
-        borderRadius: 12,
-        fontSize: 24,
-        fontWeight: 'bold',
-        borderWidth: 2,
-        backgroundColor: '#FFFFFF',
-    },
-    optionsRow: {
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 16,
-        marginBottom: 16,
-    },
-    rememberMeText: {
-        fontSize: 16,
-    },
-    forgotPassword: {
-        fontSize: 16,
     },
     mainButton: {
         backgroundColor: '#2355B6',
@@ -162,19 +244,10 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 24,
     },
-    input: {
-        backgroundColor: '#F5F5F5',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        fontSize: 16,
-        color: '#636F85',
-    },
     passwordContainer: {
         backgroundColor: '#F5F5F5',
         borderRadius: 12,
         paddingHorizontal: 16,
-
         paddingVertical: 4,
         flexDirection: 'row',
         alignItems: 'center',
@@ -186,6 +259,5 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingVertical: 16,
-
     },
 });

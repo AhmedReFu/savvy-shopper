@@ -7,7 +7,6 @@ import { AuthStackParamList } from './src/Navigation/types';
 import AdsPerformance from './src/screens/Ads/AdsPerformance';
 import CreateAds from './src/screens/Ads/CreateAds';
 import MyAds from './src/screens/Ads/MyAds';
-import AuthScreen from './src/screens/Auth_Screen/AuthScreen';
 import CreateNewPassword from './src/screens/Auth_Screen/CreateNewPassword';
 import OtpAuth from './src/screens/Auth_Screen/OtpAuth';
 import OtpResetPassword from './src/screens/Auth_Screen/OtpResetPassword';
@@ -38,7 +37,6 @@ function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName='Welcome'>
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="AuthScreen" component={AuthScreen} />
       <Stack.Screen name="SignIn" component={SignIn} options={{ animation: "slide_from_left" }} />
       <Stack.Screen name="SignUp" component={SignUp} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ animation: "slide_from_right" }} />
