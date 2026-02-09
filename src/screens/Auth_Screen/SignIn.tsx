@@ -1,10 +1,13 @@
+import { IPA_BASE, LOGIN } from '@env';
 import { Entypo, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import axios from 'axios';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import React, { useState } from 'react';
 import { Alert, Dimensions, Image, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SuccessModal from '../../components/SuccessModal';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
 
@@ -13,14 +16,18 @@ const { width, height } = Dimensions.get('window');
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = LOGIN
 const SignIn = () => {
 
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
 
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleAppleSignIn = async () => {
         try {
@@ -75,6 +82,45 @@ const SignIn = () => {
             Alert.alert('Apple Sign-In Error', e?.message || 'Something went wrong');
         }
     };
+
+    const handleSignIn = async () => {
+
+        try {
+            setLoading(true);
+            const res = await axios.post(
+                `${API_BASE_URL}${END_POINTS}`,
+                {
+                    email: email.trim().toLowerCase(),
+                    password: password,
+                },
+                {
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 15000,
+                }
+            );
+            const data = res.data;
+            if (data?.success === true) {
+                setShowSuccessModal(true)
+                setTimeout(() => {
+                    setShowSuccessModal(false)
+                    navigation.navigate('MainTabs', {
+
+                        email: email.trim().toLowerCase(),
+                    } as any);
+
+                }, 5000);
+            }
+
+        } catch (e: any) {
+            const msg =
+                e?.response?.data?.message ||
+                e?.message ||
+                'Something went wrong';
+            Alert.alert('Sign in failed', msg);
+
+
+        }
+    }
 
     return (
         <SafeAreaView className='flex-1 bg-[#F9F9FB] ' >
@@ -141,7 +187,7 @@ const SignIn = () => {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.mainButton} onPress={() => navigation.navigate("MainTabs")}>
+                    <TouchableOpacity style={styles.mainButton} onPress={handleSignIn}>
                         <Text style={styles.mainButtonText}>Sign In</Text>
                     </TouchableOpacity>
 
@@ -171,6 +217,12 @@ const SignIn = () => {
                     </View>
                 </ScrollView>
             </View>
+            <SuccessModal
+                visible={showSuccessModal}
+                title="Successful!"
+                description="You have signed in successfully."
+                onClose={() => setShowSuccessModal(false)}
+            />
         </SafeAreaView >
     )
 }
