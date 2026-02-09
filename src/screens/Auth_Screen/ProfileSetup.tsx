@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import axios from 'axios'
 import * as ImagePicker from 'expo-image-picker'
 import React, { useState } from 'react'
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AppHeader from '../../components/AppHeader'
 import BackButton from '../../components/BackButton'
@@ -55,6 +55,10 @@ const ProfileSetup = () => {
         setImage(result);
 
     };
+
+    // Get selected image URI for display
+    const selectedImageUri = image?.assets?.[0]?.uri;
+
     const handleSubmit = async () => {
         if (!image || image.canceled || !image.assets?.[0]) {
             Alert.alert('Error', 'Please select a profile picture');
@@ -62,21 +66,17 @@ const ProfileSetup = () => {
         }
 
         const selectedImage = image.assets[0];
-
-
         const formData = new FormData();
         formData.append('email', params.email || '');
         formData.append('address', address);
         formData.append('interests', JSON.stringify(interestsItem));
-        formData.append('refaradal_code', referCode)
-
+        formData.append('referred_by_code', referCode);
 
         formData.append('profile_picture', {
             uri: selectedImage.uri,
             type: selectedImage.mimeType || 'image/jpeg',
             name: selectedImage.fileName || 'profile.jpg',
         } as any);
-        console.log(formData)
         try {
             const res = await axios.post(
                 `${API_BASE_URL}${END_POINTS}`,
@@ -148,10 +148,18 @@ const ProfileSetup = () => {
                     near you,</Text>
                 <TouchableOpacity onPress={pickImage}>
                     <View className='items-center my-2'>
-                        <MaterialCommunityIcons name="account-circle" size={120} color="#E3E3E9" />
+                        {selectedImageUri ? (
+                            <Image
+                                source={{ uri: selectedImageUri }}
+                                className='w-[120px] h-[120px] rounded-full'
+                            />
+                        ) : (
+                                <MaterialCommunityIcons name="account-circle" size={120} color="#E3E3E9" />
+                        )}
                     </View>
-                    <MaterialIcons name="add-circle" size={24} color="#2355B6" className='absolute left-60
-                  bottom-6 border border-white rounded-full' />
+                    <View className='absolute left-60 bottom-6 bg-white rounded-full'>
+                        <MaterialIcons name="add-circle" size={24} color="#2355B6" />
+                    </View>
                 </TouchableOpacity>
                 <Text className='text-[#2355B6] text-xl font-bold text-center'>
                     Upload Photo
