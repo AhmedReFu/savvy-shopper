@@ -1,3 +1,4 @@
+import { IPA_BASE, PROFILE } from "@env";
 import {
     AntDesign,
     Feather,
@@ -6,10 +7,12 @@ import {
     MaterialCommunityIcons,
     MaterialIcons,
 } from "@expo/vector-icons";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useState } from "react";
-import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import axios from "axios";
+import React, { useCallback, useState } from "react";
+import { Image, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthStackParamList } from "../../Navigation/types";
 
@@ -100,41 +103,84 @@ const RowItem = ({ leftIcon, title, rightIcon = true, onPress }: any) => (
 const Divider = () => <View className="h-[1px] bg-[#EEF0F3]" />;
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
+type UserProfile = {
+    name: string;
+    email: string;
+    profile_picture: string;
+    address: string;
+    interests: string[]; // তোমার response এ এটা string array
+    refaradal_code: string;
+    balance: number;
+    has_claimed_referral: boolean;
+    referred_by: string | null;
+};
+
+
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = PROFILE;
 
 const Profile = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
-
-
+    const [user, setUser] = useState<UserProfile | null>(null);
     const [payOpen, setPayOpen] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            const loadData = async () => {
+                console.log("Profile Screen Focused 🔄");
+
+                const token = await AsyncStorage.getItem("vToken");
+
+                try {
+                    const res = await axios.get(
+                        `${API_BASE_URL}${END_POINTS}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+
+                    setUser(res.data.data);
+                } catch (error) {
+                    console.error("Error loading data:", error);
+                }
+            };
+
+            loadData();
+        }, [])
+    );
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     return (
         <SafeAreaView className="flex-1 bg-[#F9F9FB]">
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-                <View className="px-5 pb-10">
+
+            <View className="px-5 ">
                     {/* Header */}
-                    <View className="items-center mt-2 mb-5">
+                <View className="items-center my-2">
                         <Text className="text-lg font-bold text-[#2D2D2D]">My Profile</Text>
                     </View>
-
+                <ScrollView className="mb-28" showsVerticalScrollIndicator={false}>
                     {/* Avatar */}
                     <View className="items-center">
-                        <View className="w-28 h-28 rounded-full bg-white items-center justify-center shadow-sm shadow-black/10">
-                            <MaterialCommunityIcons name="account" size={64} color="#D1D6DB" />
-                        </View>
-
-                        <View className="absolute right-[145px] top-[66px]">
-                            <View className="bg-white rounded-full p-[2px]">
-                                <MaterialIcons name="add-circle" size={26} color="#2355B6" />
-                            </View>
+                        <View className="w-32 h-32 rounded-full bg-white items-center justify-center shadow-sm shadow-black/10 overflow-hidden">
+                            {user?.profile_picture ? (
+                                <Image
+                                    source={{ uri: user.profile_picture }}
+                                    style={{ width: "100%", height: "100%" }}
+                                    resizeMode="cover"
+                                />
+                            ) : (
+                                <MaterialCommunityIcons name="account" size={64} color="#D1D6DB" />
+                            )}
                         </View>
                     </View>
 
                     <Text className="text-2xl font-extrabold text-center mt-4 text-[#2D2D2D]">
-                        Ahmed ReFat
+                        {user?.name}
                     </Text>
-                    <Text className="text-sm text-center mt-1 text-[#636F85] font-semibold">
-                        developer.mdnazmul@gmail.com
+                    <Text className="text-lg text-center mt-1 text-[#636F85] font-semibold">
+                        {user?.email}
                     </Text>
 
                     {/* Quick actions */}
@@ -158,7 +204,9 @@ const Profile = () => {
                             title="Refer & Earn"
                             icon={<Ionicons name="gift" size={20} color="#F59E0B" />}
                             iconBg="#FEF3C7"
-                            onPress={() => navigation.navigate("ReFarAndEarn")}
+                            onPress={() => (navigation as any).navigate("ReFarAndEarn", {
+                                user: user
+                            })}
                         />
                         <QuickCard
                             title="Review App"
@@ -179,32 +227,32 @@ const Profile = () => {
                     {/* Personal Information */}
                     <Card className="mt-5 px-4 pt-4">
                         <View className="flex-row items-center justify-between mb-2">
-                            <Text className="text-base font-bold text-[#2D2D2D]">Personal Information</Text>
+                            <Text className="text-lg font-bold text-[#2D2D2D]">Personal Information</Text>
                             <TouchableOpacity onPress={() => navigation.navigate("EditProfile")}>
-                                <MaterialIcons name="edit" size={18} color="#636F85" />
+                                <MaterialIcons name="edit" size={24} color="#636F85" />
                             </TouchableOpacity>
                         </View>
 
                         <RowItem
-                            title="Ahmed ReFat"
+                            title={user?.name}
                             rightIcon={false}
                             leftIcon={<Ionicons name="person" size={16} color="#636F85" />}
                         />
                         <Divider />
                         <RowItem
-                            title="developer.mdnazmul@gmail.com"
+                            title={user?.email}
                             rightIcon={false}
                             leftIcon={<MaterialCommunityIcons name="email-outline" size={16} color="#636F85" />}
                         />
                         <Divider />
                         <RowItem
-                            title="Gulshan 1, Dhaka, Bangladesh"
+                            title={user?.address}
                             rightIcon={false}
                             leftIcon={<Ionicons name="location-outline" size={16} color="#636F85" />}
                         />
                         <Divider />
                         <RowItem
-                            title="Grocery, Home"
+                            title={user?.interests?.join(", ")}
                             rightIcon={false}
                             leftIcon={<MaterialCommunityIcons name="dots-grid" size={16} color="#636F85" />}
                         />
@@ -212,7 +260,7 @@ const Profile = () => {
 
                     {/* Settings */}
                     <Card className="mt-5 px-4 pt-4">
-                        <Text className="text-base font-bold text-[#2D2D2D] mb-2">Settings</Text>
+                        <Text className="text-lg font-bold text-[#2D2D2D] mb-2">Settings</Text>
 
                         <RowItem
                             title="Notifications"
@@ -319,8 +367,9 @@ const Profile = () => {
                         </View>
                         <Text className="text-[15px] font-bold text-[#EF4444]">Logout</Text>
                     </TouchableOpacity>
-                </View>
-            </ScrollView>
+                </ScrollView>
+            </View>
+
             <PaymentMethodModal
                 visible={payOpen}
                 onClose={() => setPayOpen(false)}

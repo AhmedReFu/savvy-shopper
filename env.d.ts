@@ -15,4 +15,6 @@ declare module "@env" {
   export const PAYMENT_REQUIRED: string;
   export const PROFILE_UPDATE: string;
   export const PROFILE_SETUP: string;
+  export const PROFILE: string;
+  export const CHANGE_PASSWORD: string;
 }

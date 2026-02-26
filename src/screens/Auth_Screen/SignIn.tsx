@@ -10,6 +10,7 @@ import {
     Alert,
     Dimensions,
     Image,
+    KeyboardAvoidingView,
     Platform,
     ScrollView,
     StyleSheet,
@@ -61,7 +62,6 @@ const SignIn = () => {
 
         loadRememberedData();
     }, []);
-
 
     const handleRememberMeChange = async (value: boolean) => {
         setRememberMe(value);
@@ -139,14 +139,11 @@ const SignIn = () => {
                 return;
             }
 
-            const res = await fetch(
-                'https://agen-backend-office.vercel.app/api/v1/auth/appleLogin',
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ identityToken }),
-                },
-            );
+            const res = await fetch('https://agen-backend-office.vercel.app/api/v1/auth/appleLogin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identityToken }),
+            });
 
             const data = await res.json();
 
@@ -184,27 +181,39 @@ const SignIn = () => {
             );
 
             const data = res.data;
-
+            console.log(data.data.access)
             if (data?.success === true) {
-                // Save email if rememberMe ON (extra safety)
                 if (rememberMe) {
                     await AsyncStorage.setItem('rememberedEmail', email.trim().toLowerCase());
+                    await AsyncStorage.setItem("vToken", data.data.access)
                 }
 
                 setShowSuccessModal(true);
                 setTimeout(() => {
                     setShowSuccessModal(false);
-                    navigation.navigate(
-                        'MainTabs',
-                        { email: email.trim().toLowerCase() } as any,
-                    );
+                    navigation.navigate('MainTabs', { email: email.trim().toLowerCase() } as any);
                 }, 1500);
             } else {
                 Alert.alert('Sign in failed', data?.message || 'Invalid credentials');
             }
         } catch (e: any) {
-            const msg =
-                e?.response?.data?.message || e?.message || 'Something went wrong';
+            const msg = e?.response?.data?.message || e?.message || 'Something went wrong';
+            console.log(msg)
+            if (msg == "Profile setup not completed. Please complete your profile first!") {
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                    navigation.navigate('ProfileSetup', { email: email.trim().toLowerCase() } as any);
+                }, 1500);
+            }
+            if (msg == "Account not activated. Please verify OTP first!") {
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                    navigation.navigate('OtpAuth', {
+                        email: email.trim().toLowerCase(),
+                    } as any);
+                }, 1500);
+
+            }
             Alert.alert('Sign in failed', msg);
         } finally {
             setLoading(false);
@@ -212,109 +221,120 @@ const SignIn = () => {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-[#F9F9FB]">
-            <View className="px-5">
-                <View style={styles.logoContainer}>
-                    <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
-                </View>
-                <ScrollView showsVerticalScrollIndicator={false}>
-                    <Text className="text-3xl font-bold">Welcome to DEALNUX!</Text>
-                    <Text className="text-xl text-[#636F85] my-4">
-                        Sign in to track prices and save money.
-                    </Text>
-                    <Text style={styles.label}>Email address</Text>
-                    <View style={styles.passwordContainer} className="border gap-4">
-                        <MaterialIcons name="email" size={24} color="#334155" />
-                        <TextInput
-                            className="text-xl flex-1"
-                            placeholder="Your email ex: yourmail@gmail.com"
-                            placeholderTextColor="#A0A0A0"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+            >
+                <View style={styles.page}>
+                    <View style={styles.logoContainer}>
+                        <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
                     </View>
-                    <Text style={styles.label}>Password</Text>
-                    <View style={styles.passwordContainer} className="border gap-4">
-                        <Entypo name="lock" size={24} color="#334155" />
-                        <TextInput
-                            className="text-xl flex-1"
-                            placeholder="****************"
-                            placeholderTextColor="#A0A0A0"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={!showPassword}
-                        />
-                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                            {showPassword ? (
-                                <Ionicons name="eye-outline" size={24} color="black" />
-                            ) : (
-                                <Ionicons name="eye-off-outline" size={24} color="black" />
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.optionsRow}>
-                        <TouchableOpacity
-                            style={styles.termsContainer}
-                            onPress={() => handleRememberMeChange(!rememberMe)}
-                        >
-                            <View
-                                style={[
-                                    styles.checkboxSquare,
-                                    rememberMe && styles.checkboxSquareChecked,
-                                ]}
+
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={styles.scrollContent}
+                    >
+                        <Text style={styles.title}>Welcome to DEALNUX!</Text>
+                        <Text style={styles.subTitle}>Sign in to track prices and save money.</Text>
+
+                        <Text style={styles.label}>Email address</Text>
+                        <View style={[styles.inputRow, styles.inputBorder]}>
+                            <MaterialIcons name="email" size={24} color="#334155" style={styles.iconMr} />
+                            <TextInput
+                                style={styles.textInput}
+                                placeholder="Your email ex: yourmail@gmail.com"
+                                placeholderTextColor="#A0A0A0"
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                            />
+                        </View>
+
+                        <Text style={styles.label}>Password</Text>
+                        <View style={[styles.inputRow, styles.inputBorder]}>
+                            <Entypo name="lock" size={24} color="#334155" style={styles.iconMr} />
+                            <TextInput
+                                style={styles.textInput}
+                                placeholder="****************"
+                                placeholderTextColor="#A0A0A0"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!showPassword}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={10}>
+                                {showPassword ? (
+                                    <Ionicons name="eye-outline" size={24} color="black" />
+                                ) : (
+                                    <Ionicons name="eye-off-outline" size={24} color="black" />
+                                )}
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.optionsRow}>
+                            <TouchableOpacity
+                                style={styles.termsContainer}
+                                onPress={() => handleRememberMeChange(!rememberMe)}
+                                activeOpacity={0.8}
                             >
-                                {rememberMe && <Text style={styles.checkmark}>✓</Text>}
-                            </View>
-                            <Text style={styles.rememberMeText}>Remember Me</Text>
+                                <View style={[styles.checkboxSquare, rememberMe && styles.checkboxSquareChecked]}>
+                                    {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+                                </View>
+                                <Text style={styles.rememberMeText}>Remember Me</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={() => navigation.navigate('ResetPassword')} activeOpacity={0.8}>
+                                <Text style={styles.forgotPassword}>Forgot Password</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.mainButton, loading && { opacity: 0.7 }]}
+                            onPress={handleSignInEmail}
+                            disabled={loading}
+                            activeOpacity={0.9}
+                        >
+                            <Text style={styles.mainButtonText}>{loading ? 'Signing In...' : 'Sign In'}</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => navigation.navigate('ResetPassword')}>
-                            <Text style={styles.forgotPassword}>Forgot Password</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <TouchableOpacity
-                        style={[styles.mainButton, loading && { opacity: 0.7 }]}
-                        onPress={handleSignInEmail}
-                        disabled={loading}
-                    >
-                        <Text style={styles.mainButtonText}>
-                            {loading ? 'Signing In...' : 'Sign In'}
-                        </Text>
-                    </TouchableOpacity>
-                    <View style={styles.dividerContainer}>
-                        <View style={styles.divider} />
-                        <Text style={styles.orText}>Or Login With</Text>
-                        <View style={styles.divider} />
-                    </View>
-                    <View className="flex-row justify-between my-2">
-                        <TouchableOpacity>
-                            <Image className="h-16 w-52" source={Images.Google} resizeMode="stretch" />
-                        </TouchableOpacity>
+                        <View style={styles.dividerContainer}>
+                            <View style={styles.divider} />
+                            <Text style={styles.orText}>Or Login With</Text>
+                            <View style={styles.divider} />
+                        </View>
 
-                        <TouchableOpacity onPress={handleAppleSignIn}>
-                            <Image className="h-16 w-52" source={Images.Apple} resizeMode="stretch" />
-                        </TouchableOpacity>
-                    </View>
-                    <View
-                        style={{ flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap' }}
-                        className="mb-20"
-                    >
-                        <Text style={{ fontSize: 18 }}>Don't have an account? </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-                            <Text style={{ fontSize: 18, color: 'red' }}>Sign Up</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-            </View>
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity activeOpacity={0.9}>
+                                <Image style={styles.socialBtn} source={Images.Google} resizeMode="stretch" />
+                            </TouchableOpacity>
 
-            <SuccessModal
-                visible={showSuccessModal}
-                title="Successful!"
-                description="You have signed in successfully."
-                onClose={() => setShowSuccessModal(false)}
-            />
+                            <TouchableOpacity onPress={handleAppleSignIn} activeOpacity={0.9}>
+                                <Image style={styles.socialBtn} source={Images.Apple} resizeMode="stretch" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.signupRow}>
+                            <Text style={styles.signupText}>Don't have an account? </Text>
+                            <TouchableOpacity onPress={() => navigation.navigate('SignUp')} activeOpacity={0.8}>
+                                <Text style={styles.signupLink}>Sign Up</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                </View>
+
+                <SuccessModal
+                    visible={showSuccessModal}
+                    title="Successful!"
+                    description="You have signed in successfully."
+                    onClose={() => setShowSuccessModal(false)}
+                />
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
@@ -322,6 +342,18 @@ const SignIn = () => {
 export default SignIn;
 
 const styles = StyleSheet.create({
+    safe: {
+        flex: 1,
+        backgroundColor: '#F9F9FB',
+    },
+    page: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    scrollContent: {
+        paddingBottom: 40, // ✅ iOS bottom overlap fix
+    },
+
     logoContainer: {
         alignItems: 'center',
         paddingTop: height * 0.02,
@@ -330,6 +362,18 @@ const styles = StyleSheet.create({
         width: width * 0.6,
         height: height * 0.2,
     },
+
+    title: {
+        fontSize: 30,
+        fontWeight: '800',
+        color: '#111827',
+    },
+    subTitle: {
+        fontSize: 18,
+        color: '#636F85',
+        marginVertical: 16,
+    },
+
     label: {
         fontSize: 16,
         fontWeight: '600',
@@ -337,12 +381,40 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 16,
     },
+
+    inputRow: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: Platform.OS === 'ios' ? 14 : 10, // ✅ iOS fix
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    inputBorder: {
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    iconMr: {
+        marginRight: 16,
+    },
+    textInput: {
+        flex: 1,
+        fontSize: 18,
+        // ✅ iOS TextInput baseline/height fix
+        paddingVertical: Platform.OS === 'ios' ? 0 : 2,
+        color: '#111827',
+    },
+
     optionsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         marginTop: 16,
         marginBottom: 16,
+    },
+    termsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     rememberMeText: {
         fontSize: 16,
@@ -352,18 +424,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#E74C3C',
     },
+
     mainButton: {
         backgroundColor: '#2355B6',
         borderRadius: 12,
         paddingVertical: 18,
         alignItems: 'center',
-        marginTop: 0,
     },
     mainButtonText: {
         fontSize: 16,
         fontWeight: '600',
         color: '#FFFFFF',
     },
+
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -379,20 +452,7 @@ const styles = StyleSheet.create({
         color: '#666666',
         marginHorizontal: 16,
     },
-    passwordContainer: {
-        backgroundColor: '#F5F5F5',
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 4,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    termsContainer: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginTop: 16,
-        marginBottom: 16,
-    },
+
     checkboxSquare: {
         width: 22,
         height: 22,
@@ -402,14 +462,41 @@ const styles = StyleSheet.create({
         marginRight: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 2,
     },
     checkboxSquareChecked: {
         backgroundColor: '#2355B6',
+        borderColor: '#2355B6',
     },
     checkmark: {
         color: '#FFFFFF',
         fontSize: 14,
+        fontWeight: '700',
+    },
+
+    socialRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 8,
+    },
+    socialBtn: {
+        height: 64,
+        width: (width - 40 - 12) / 2, // 2 buttons with gap
+    },
+
+    signupRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
+        marginTop: 20,
+        marginBottom: 30,
+    },
+    signupText: {
+        fontSize: 18,
+        color: '#111827',
+    },
+    signupLink: {
+        fontSize: 18,
+        color: 'red',
         fontWeight: '700',
     },
 });

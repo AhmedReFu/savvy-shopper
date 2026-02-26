@@ -5,14 +5,15 @@ import {
     Alert,
     Dimensions,
     Image,
+    KeyboardAvoidingView,
+    Platform,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 
 import { IPA_BASE, OTP_AUTH } from '@env';
 import axios from 'axios';
@@ -31,13 +32,11 @@ interface RouteParams {
     email?: string;
 }
 
-
 const OtpAuth = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
     const route = useRoute();
     const params = route.params as RouteParams;
 
-    const email = params.email
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [code, setCode] = useState<string[]>(['', '', '', '']);
     const [timer, setTimer] = useState(60);
@@ -55,6 +54,12 @@ const OtpAuth = () => {
         return () => clearInterval(t);
     }, [timer]);
 
+    // ✅ iOS autofocus glitch fix: focus after mount
+    useEffect(() => {
+        const t = setTimeout(() => inputsRef.current[0]?.focus(), 200);
+        return () => clearTimeout(t);
+    }, []);
+
     const handleChange = (text: string, index: number) => {
         const numericText = text.replace(/[^0-9]/g, '');
         const newCode = [...code];
@@ -62,24 +67,17 @@ const OtpAuth = () => {
         setCode(newCode);
 
         if (numericText && index < 3) {
-            setTimeout(() => inputsRef.current[index + 1]?.focus(), 10);
+            requestAnimationFrame(() => inputsRef.current[index + 1]?.focus());
         }
-
-
-        // if (numericText && index === 3) {
-        //     const enteredCode = newCode.join('');
-        //     if (enteredCode.length === 4) handleSubmit(enteredCode);
-        // }
     };
 
     const handleKeyPress = (e: any, index: number) => {
         if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
-            setTimeout(() => inputsRef.current[index - 1]?.focus(), 10);
+            requestAnimationFrame(() => inputsRef.current[index - 1]?.focus());
         }
     };
 
     const handleSubmit = async (enteredCode: string) => {
-
         if (!params?.email) {
             Alert.alert('Error', 'Email missing. Please go back and try again.');
             return;
@@ -94,40 +92,29 @@ const OtpAuth = () => {
 
             const res = await axios.post(
                 `${API_BASE_URL}${END_POINTS}`,
-                {
-                    email: params.email,
-                    otp: enteredCode,
-                },
-                {
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 15000,
-                }
+                { email: params.email, otp: enteredCode },
+                { headers: { 'Content-Type': 'application/json' }, timeout: 15000 },
             );
 
             const data = res.data;
+
             if (data?.success === true) {
                 setShowSuccessModal(true);
                 setTimeout(() => {
                     setShowSuccessModal(false);
-                    navigation.navigate('ProfileSetup', {
-                        email: params.email,
-                    } as any);
+                    navigation.navigate('ProfileSetup', { email: params.email } as any);
                 }, 1500);
             } else {
                 const msg = data?.message || 'Invalid OTP';
                 Alert.alert('OTP Failed', msg);
                 setCode(['', '', '', '']);
-                setTimeout(() => inputsRef.current[0]?.focus(), 50);
+                requestAnimationFrame(() => inputsRef.current[0]?.focus());
             }
         } catch (e: any) {
-            const msg =
-                e?.response?.data?.message ||
-                e?.message ||
-                'Something went wrong';
-
+            const msg = e?.response?.data?.message || e?.message || 'Something went wrong';
             Alert.alert('OTP Failed', msg);
             setCode(['', '', '', '']);
-            setTimeout(() => inputsRef.current[0]?.focus(), 50);
+            requestAnimationFrame(() => inputsRef.current[0]?.focus());
         } finally {
             setIsVerifying(false);
         }
@@ -155,95 +142,102 @@ const OtpAuth = () => {
         if (!canResend) return;
         setTimer(60);
         setCode(['', '', '', '']);
-        setTimeout(() => inputsRef.current[0]?.focus(), 50);
+        requestAnimationFrame(() => inputsRef.current[0]?.focus());
     };
 
     return (
-        <SafeAreaView className="bg-[#F9F9FB] flex-1">
-            <View className="px-5 flex-1">
-                <AppHeader left={() => <BackButton />} />
+        <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+            >
+                <View style={styles.page}>
+                    <AppHeader left={() => <BackButton />} />
 
-                <View style={styles.logoContainer}>
-                    <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
-                </View>
-
-                <View className="mt-10 flex-1">
-                    <Text className="text-3xl text-center font-bold">Verification Code</Text>
-                    <Text className="text-xl text-center text-[#636F85] my-4">
-                        Enter the verification code that we have sent to your email.
-                    </Text>
-
-                    <View className="flex-row justify-between my-10">
-                        {code.map((digit, index) => (
-                            <TextInput
-                                key={index}
-                                placeholder="0"
-                                placeholderTextColor="#6B7280"
-                                ref={(ref) => {
-                                    if (ref) inputsRef.current[index] = ref;
-                                }}
-                                style={[
-                                    styles.otpInput,
-                                    { borderColor: digit ? '#2355B6' : '#E5E7EB' },
-                                ]}
-                                keyboardType="number-pad"
-                                maxLength={1}
-                                value={digit}
-                                onChangeText={(text) => handleChange(text, index)}
-                                onKeyPress={(e) => handleKeyPress(e, index)}
-                                selectTextOnFocus
-                                autoFocus={index === 0}
-                                editable={!isVerifying}
-                            />
-                        ))}
+                    <View style={styles.logoContainer}>
+                        <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
                     </View>
 
-                    <View style={styles.optionsRow}>
-                        <View className="flex-row">
-                            <Text style={styles.rememberMeText}>Didn't receive the code?</Text>
+                    <View style={styles.content}>
+                        <Text style={styles.title}>Verification Code</Text>
+                        <Text style={styles.subTitle}>
+                            Enter the verification code that we have sent to your email.
+                        </Text>
 
-                            <Text
-                                style={styles.rememberMeText}
-                                className={canResend ? 'text-[#EB4335]' : 'text-[#EB4335]/50'}
-                                onPress={handleResend}
-                            >
-                                {' '}
-                                Resend code
-                            </Text>
+                        <View style={styles.otpRow}>
+                            {code.map((digit, index) => (
+                                <TextInput
+                                    key={index}
+                                    placeholder="0"
+                                    placeholderTextColor="#6B7280"
+                                    ref={(ref) => {
+                                        if (ref) inputsRef.current[index] = ref;
+                                    }}
+                                    style={[
+                                        styles.otpInput,
+                                        { borderColor: digit ? '#2355B6' : '#E5E7EB' },
+                                    ]}
+                                    keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChangeText={(text) => handleChange(text, index)}
+                                    onKeyPress={(e) => handleKeyPress(e, index)}
+                                    editable={!isVerifying}
+                                    // ✅ iOS baseline fix
+                                    textAlignVertical="center"
+                                    // remove autoFocus per-input (iOS glitch)
+                                    autoFocus={false}
+                                    selectTextOnFocus
+                                    returnKeyType="done"
+                                />
+                            ))}
                         </View>
 
-                        <View className="flex-row mt-2">
-                            <Text style={styles.forgotPassword}>Resend code at </Text>
-                            <Text style={styles.forgotPassword} className="text-[#2355b6]">
-                                {formatTime(timer)}
-                            </Text>
-                        </View>
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.mainButton, { opacity: isVerifying ? 0.7 : 1 }]}
-                        onPress={handleVerifyPress}
-                        activeOpacity={0.9}
-                        disabled={isVerifying}
-                    >
-                        {isVerifying ? (
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <ActivityIndicator color="#fff" />
-                                <Text style={[styles.mainButtonText, { marginLeft: 10 }]}>Verifying...</Text>
+                        <View style={styles.optionsRow}>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                <Text style={styles.infoText}>Didn't receive the code?</Text>
+                                <Text
+                                    style={[styles.infoText, { color: canResend ? '#EB4335' : 'rgba(235,67,53,0.5)' }]}
+                                    onPress={handleResend}
+                                >
+                                    {' '}
+                                    Resend code
+                                </Text>
                             </View>
-                        ) : (
-                            <Text style={styles.mainButtonText}>Verify OTP</Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
-            </View>
 
-            <SuccessModal
-                visible={showSuccessModal}
-                title="Successful!"
-                description="Your registration was completed successfully"
-                onClose={() => setShowSuccessModal(false)}
-            />
+                            <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                                <Text style={styles.timeText}>Resend code at </Text>
+                                <Text style={[styles.timeText, { color: '#2355B6' }]}>{formatTime(timer)}</Text>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.mainButton, { opacity: isVerifying ? 0.7 : 1 }]}
+                            onPress={handleVerifyPress}
+                            activeOpacity={0.9}
+                            disabled={isVerifying}
+                        >
+                            {isVerifying ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <ActivityIndicator color="#fff" />
+                                    <Text style={[styles.mainButtonText, { marginLeft: 10 }]}>Verifying...</Text>
+                                </View>
+                            ) : (
+                                <Text style={styles.mainButtonText}>Verify OTP</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
+                <SuccessModal
+                    visible={showSuccessModal}
+                    title="Successful!"
+                    description="Your registration was completed successfully"
+                    onClose={() => setShowSuccessModal(false)}
+                />
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
@@ -251,37 +245,76 @@ const OtpAuth = () => {
 export default OtpAuth;
 
 const styles = StyleSheet.create({
+    safe: {
+        flex: 1,
+        backgroundColor: '#F9F9FB',
+    },
+    page: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+
     logoContainer: {
         alignItems: 'center',
-        paddingTop: height * 0,
+        paddingTop: 0,
     },
     logoImage: {
         width: width * 0.4,
         height: height * 0.1,
     },
+
+    content: {
+        marginTop: 24,
+        flex: 1,
+    },
+    title: {
+        fontSize: 30,
+        fontWeight: '800',
+        textAlign: 'center',
+        color: '#111827',
+    },
+    subTitle: {
+        fontSize: 18,
+        textAlign: 'center',
+        color: '#636F85',
+        marginTop: 12,
+    },
+
+    otpRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 28,
+        marginBottom: 10,
+    },
     otpInput: {
         width: 64,
         height: 64,
         textAlign: 'center',
+        textAlignVertical: 'center', // ✅ iOS vertical center
         borderRadius: 12,
         fontSize: 24,
         fontWeight: 'bold',
         borderWidth: 2,
         backgroundColor: '#FFFFFF',
+        color: '#111827',
+        paddingVertical: Platform.OS === 'ios' ? 0 : 2, // ✅ iOS baseline
     },
+
     optionsRow: {
         flexDirection: 'column',
-        justifyContent: 'space-between',
         alignItems: 'center',
         marginTop: 16,
         marginBottom: 16,
     },
-    rememberMeText: {
+    infoText: {
         fontSize: 16,
+        color: '#111827',
     },
-    forgotPassword: {
+    timeText: {
         fontSize: 16,
+        color: '#111827',
     },
+
     mainButton: {
         backgroundColor: '#2355B6',
         borderRadius: 12,

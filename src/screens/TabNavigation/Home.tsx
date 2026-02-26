@@ -1,8 +1,11 @@
+import { IPA_BASE, PROFILE } from '@env'
 import { EvilIcons, Ionicons, MaterialIcons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import axios from 'axios'
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     Dimensions,
     Image,
@@ -23,14 +26,75 @@ const { width } = Dimensions.get('window')
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
+type UserProfile = {
+    name: string;
+    email: string;
+    profile_picture: string;
+    address: string;
+    interests: string[]; // তোমার response এ এটা string array
+    refaradal_code: string;
+    balance: number;
+    has_claimed_referral: boolean;
+    referred_by: string | null;
+};
+
+
+
+const API_BASE_URL = IPA_BASE;
+const END_POINTS = PROFILE;
+
 const Home = () => {
-const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
-    
+    const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+
     const [premiumModalVisible, setPremiumModalVisible] = useState(false)
+    const [loading, setLoading] = useState(false);
+
     const [selectedCategory, setSelectedCategory] = useState('All')
     const [favorites, setFavorites] = useState<Set<string>>(new Set())
-
+    const [user, setUser] = useState<UserProfile | null>(null);
     const categories = ['All', 'Trending', 'Electronics', 'Fashion']
+
+    const getGreeting = () => {
+        const hour = new Date().getHours(); // 0-23
+
+        // 06:00 - 11:59
+        if (hour >= 6 && hour < 12) return "Good Morning,";
+
+        // 12:00 - 15:59
+        if (hour >= 12 && hour < 16) return "Good Noon,";
+
+        // 16:00 - 17:59
+        if (hour >= 16 && hour < 18) return "Good Afternoon,";
+
+        // 18:00 - 23:59
+        if (hour >= 18) return "Good Evening,";
+
+        // 00:00 - 05:59
+        return "Good Night,";
+    };
+
+    useEffect(() => {
+        const loadData = async () => {
+            const token = await AsyncStorage.getItem('vToken')
+            try {
+                const res = await axios.get(
+                    `${API_BASE_URL}${END_POINTS}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+                const data = res.data;
+                console.log(data.data.name)
+                setUser(data.data)
+            } catch (error) {
+                console.error('Error loading remembered data:', error);
+            }
+        };
+
+        loadData();
+    }, []);
 
     const todaysDeals = [
         {
@@ -109,7 +173,7 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
         const isFavorite = favorites.has(product.id)
 
         return (
-            <Pressable onPress={()=>navigation.navigate("ProductDetails")}  style={[styles.productCard, { width: cardWidth }]}>
+            <Pressable onPress={() => navigation.navigate("ProductDetails")} style={[styles.productCard, { width: cardWidth }]}>
                 <View style={styles.imageContainer}>
                     <Image
                         source={{ uri: product.image }}
@@ -154,22 +218,22 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
                 {/* Header Section */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>Good Morning,</Text>
-                        <Text style={styles.userName}>Ahmed ReFat</Text>
+                        <Text style={styles.greeting}>{getGreeting()}</Text>
+                        <Text style={styles.userName}>{user?.name}</Text>
                     </View>
 
                     <Pressable onPress={() => navigation.navigate("Notification")} >
-                        <Ionicons 
+                        <Ionicons
                             name="notifications" size={24} color="black" />
                     </Pressable>
-                    
+
                 </View>
 
                 {/* Search Bar */}
-                <Pressable style={styles.searchContainer} onPress={()=> navigation.navigate("SearchProduct")}>
+                <Pressable style={styles.searchContainer} onPress={() => navigation.navigate("SearchProduct")}>
                     <EvilIcons name="search" size={40} color="#94A3B8" />
-                    
-                    <Text style={styles.searchInput}>Search products, brands...</Text>
+
+                    <Text style={styles.searchInput}>Search products, brands....</Text>
                 </Pressable>
 
                 {/* Category Tabs */}
@@ -177,7 +241,7 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     style={styles.categoryContainer}
-                    
+
                 >
                     {categories.map((category) => (
                         <TouchableOpacity
@@ -268,7 +332,7 @@ const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
                 <TouchableOpacity style={styles.advertiseButton} onPress={() => navigation.navigate("MyAds")}>
                     <Text style={styles.advertiseButtonText}>Advertise on DealNux</Text>
                     <MaterialIcons name="arrow-forward" size={20} color="white" />
-                </TouchableOpacity> 
+                </TouchableOpacity>
 
 
                 {/* Today's Best Deals */}
@@ -366,7 +430,7 @@ const styles = StyleSheet.create({
     categoryContainer: {
         paddingHorizontal: 20,
         marginBottom: 20,
-        marginRight:16,
+        marginRight: 16,
     },
     categoryButton: {
         flexDirection: 'row',
@@ -410,7 +474,7 @@ const styles = StyleSheet.create({
         width: 115,
         height: 115,
     },
-   
+
     premiumIcon: {
         flexDirection: 'row',
         justifyContent: 'flex-start',
