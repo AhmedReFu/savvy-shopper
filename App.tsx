@@ -30,6 +30,7 @@ import ReFarAndEarn from './src/screens/Settings/ReFarAndEarn';
 import UpdatePassword from './src/screens/Settings/UpdatePassword';
 import Subscription from './src/screens/Subscriptions/Subscription';
 import MainTabs from './src/screens/TabNavigation/TabNavigation';
+import AdsApply from './src/screens/Settings/AdsApply';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -50,6 +51,7 @@ function AuthStack() {
       <Stack.Screen name="MyFavourite" component={MyFavourite} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="UpdatePassword" component={UpdatePassword} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="EditProfile" component={EditProfile} options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="AdsApply" component={AdsApply} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="Subscription" component={Subscription} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="ScanProduct" component={ScanProduct} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="CheckoutOptions" component={CheckoutOptions} options={{ animation: "slide_from_right" }} />

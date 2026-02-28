@@ -21,6 +21,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import AppleButtonSvg from '../../components/Apple';
+import GoogleButtonSvg from '../../components/Google';
 import SuccessModal from '../../components/SuccessModal';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
@@ -309,13 +311,19 @@ const SignIn = () => {
                             <View style={styles.divider} />
                         </View>
 
-                        <View style={styles.socialRow}>
-                            <TouchableOpacity activeOpacity={0.9}>
-                                <Image style={styles.socialBtn} source={Images.Google} resizeMode="stretch" />
-                            </TouchableOpacity>
+                        <View className='flex-row justify-center gap-4'>
+                            <TouchableOpacity
+                                className='bg-white border border-gray-200 rounded-2xl px-6 py-4 flex-row items-center justify-center flex-1'
+                                activeOpacity={0.8}
+                            >
+                                <GoogleButtonSvg />
 
-                            <TouchableOpacity onPress={handleAppleSignIn} activeOpacity={0.9}>
-                                <Image style={styles.socialBtn} source={Images.Apple} resizeMode="stretch" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className='bg-white border border-gray-200 rounded-2xl px-6 py-4 flex-row items-center justify-center flex-1'
+                                activeOpacity={0.8}
+                            >
+                                <AppleButtonSvg />
                             </TouchableOpacity>
                         </View>
 

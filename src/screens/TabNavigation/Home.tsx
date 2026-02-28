@@ -1,11 +1,11 @@
 import { IPA_BASE, PROFILE } from '@env'
 import { EvilIcons, Ionicons, MaterialIcons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { NavigationProp, useNavigation } from '@react-navigation/native'
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import axios from 'axios'
 import { LinearGradient } from 'expo-linear-gradient'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
     Dimensions,
     Image,
@@ -19,6 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { AuthStackParamList } from '../../Navigation/types'
 import PremiumModal from '../../components/PremiumModal'
+import { Toast, useToast } from '../../components/useToost'
 import { Images } from '../../constants'
 
 
@@ -31,8 +32,11 @@ type UserProfile = {
     email: string;
     profile_picture: string;
     address: string;
-    interests: string[]; // তোমার response এ এটা string array
+    interests: string[]; 
     refaradal_code: string;
+    advertiser_status: {
+        status: string;
+    };
     balance: number;
     has_claimed_referral: boolean;
     referred_by: string | null;
@@ -48,11 +52,30 @@ const Home = () => {
 
     const [premiumModalVisible, setPremiumModalVisible] = useState(false)
     const [loading, setLoading] = useState(false);
+    const toast = useToast();
 
     const [selectedCategory, setSelectedCategory] = useState('All')
     const [favorites, setFavorites] = useState<Set<string>>(new Set())
     const [user, setUser] = useState<UserProfile | null>(null);
     const categories = ['All', 'Trending', 'Electronics', 'Fashion']
+
+
+    const myAds = () => {
+        if (user?.advertiser_status.status == "not_applied") {
+            navigation.navigate("AdsApply")
+        } else if (user?.advertiser_status.status == "pending") {
+            toast.show({
+                message:
+                    ("Your Business Profile Request Is Pending."),
+                type: 'error',
+                style: 'top',
+            });
+        }
+        else {
+            navigation.navigate("MyAds")
+        }
+
+    }
 
     const getGreeting = () => {
         const hour = new Date().getHours(); // 0-23
@@ -73,28 +96,33 @@ const Home = () => {
         return "Good Night,";
     };
 
-    useEffect(() => {
-        const loadData = async () => {
-            const token = await AsyncStorage.getItem('vToken')
-            try {
-                const res = await axios.get(
-                    `${API_BASE_URL}${END_POINTS}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-                const data = res.data;
-                console.log(data.data.name)
-                setUser(data.data)
-            } catch (error) {
-                console.error('Error loading remembered data:', error);
-            }
-        };
+    useFocusEffect(
+        useCallback(() => {
+            const loadData = async () => {
+                console.log("Profile Screen Focused 🔄");
 
-        loadData();
-    }, []);
+                const token = await AsyncStorage.getItem("vToken");
+
+                try {
+                    const res = await axios.get(
+                        `${API_BASE_URL}${END_POINTS}`,
+                        {
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+                    console.log(res.data)
+                    setUser(res.data.data);
+                    console.log(user?.advertiser_status.status)
+                } catch (error) {
+                    console.error("Error loading data:", error);
+                }
+            };
+
+            loadData();
+        }, [])
+    );
 
     const todaysDeals = [
         {
@@ -329,7 +357,7 @@ const Home = () => {
                 </LinearGradient>
 
                 {/* Advertise Button */}
-                <TouchableOpacity style={styles.advertiseButton} onPress={() => navigation.navigate("MyAds")}>
+                <TouchableOpacity style={styles.advertiseButton} onPress={myAds}>
                     <Text style={styles.advertiseButtonText}>Advertise on DealNux</Text>
                     <MaterialIcons name="arrow-forward" size={20} color="white" />
                 </TouchableOpacity>
@@ -372,6 +400,15 @@ const Home = () => {
             <PremiumModal
                 visible={premiumModalVisible}
                 onClose={() => setPremiumModalVisible(false)}
+            />
+            <Toast
+                style={toast.style}
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                fadeAnim={toast.fadeAnim}
+                buttons={toast.buttons}
+                onHide={toast.hide}
             />
         </SafeAreaView>
     )

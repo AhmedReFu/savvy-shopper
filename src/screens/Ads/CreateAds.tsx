@@ -65,11 +65,12 @@ const CreateAds = () => {
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const [title, setTitle] = useState('')
+
     const [desc, setDesc] = useState('')
     const [url, setUrl] = useState('')
     const [budget, setBudget] = useState('')
 
-
+    const target = ["Home", "Cart", "Product"]
 
     useEffect(() => {
         if (!showSuccessModal) return;
@@ -207,16 +208,6 @@ const CreateAds = () => {
                                     />
                                 </View>
                             </View>
-                        </View>
-
-                        {/* Call to Action */}
-                        <View className="mt-6">
-                            <FieldLabel>Call to Action</FieldLabel>
-                            <SelectBox
-                                placeholder="Shop Now"
-                                onPress={() => { }}
-                                rightIcon={<Ionicons name="chevron-down" size={20} color="#6B7280" />}
-                            />
                         </View>
 
                         {/* Submit Button */}

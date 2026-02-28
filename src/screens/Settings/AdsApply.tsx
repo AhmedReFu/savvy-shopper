@@ -1,5 +1,4 @@
-import { CHANGE_PASSWORD, IPA_BASE } from '@env'
-import { Entypo, Ionicons } from '@expo/vector-icons'
+import { ADS_APPLY, IPA_BASE } from '@env'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
@@ -15,15 +14,14 @@ import { AuthStackParamList } from '../../Navigation/types'
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>;
 
 const API_BASE_URL = IPA_BASE;
-const END_POINTS = CHANGE_PASSWORD;
+const END_POINTS = ADS_APPLY;
 
-const UpdatePassword = () => {
+const AdsApply = () => {
     const navigation = useNavigation<NavigationProp<AuthNavProp>>();
     const toast = useToast();
-    const [oldPassword, setOldPassword] = useState('')
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const [businessName, setBusinessName] = useState('')
+    const [businessDetails, setBusinessDetails] = useState('');
+    const [website, setWebsite] = useState('');
 
     const handleSaveChanges = async () => {
         const token = await AsyncStorage.getItem("vToken");
@@ -38,39 +36,31 @@ const UpdatePassword = () => {
             return;
         }
 
-        if (!oldPassword.trim()) {
+        if (!businessName.trim()) {
             toast.show({
                 message:
-                    ("Please enter your old password"),
+                    ("Please enter your business name."),
                 type: 'error',
                 style: 'top',
             });
             return;
         }
 
-        if (!password.trim()) {
+        if (!businessDetails.trim()) {
             toast.show({
                 message:
-                    ("Please enter your password"),
+                    ("Please enter your business details."),
                 type: 'error',
                 style: 'top',
             });
             return;
         }
-        if (!confirmPassword.trim()) {
-            toast.show({
-                message:
-                    ("Please enter your confirm password"),
-                type: 'error',
-                style: 'top',
-            });
-            return;
-        }
+        
 
         const formData = new FormData();
-        formData.append("old_password", oldPassword);
-        formData.append("new_password", password);
-        formData.append("confirm_password", confirmPassword);
+        formData.append("business_name", businessName);
+        formData.append("business_details", businessDetails);
+        formData.append("website", website);
 
 
         try {
@@ -86,7 +76,7 @@ const UpdatePassword = () => {
             } else {
                 toast.show({
                     message:
-                        ("Password update failed"),
+                        ("Business profile create failed"),
                     type: 'error',
                     style: 'top',
                 });
@@ -95,7 +85,7 @@ const UpdatePassword = () => {
             console.error("PATCH error:", error?.response?.data || error);
             toast.show({
                 message:
-                    (error?.response?.data?.message || "Password Update failed"),
+                    (error?.response?.data?.message || "Business profile create failed"),
                 type: 'error',
                 style: 'top',
             });
@@ -106,58 +96,44 @@ const UpdatePassword = () => {
             <View className="px-5">
 
                 <View className='flex-row items-center gap-4' >
-                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Change Password</Text>} />
+                    <AppHeader left={() => <BackButton />} middle={() => <Text className='text-lg font-semibold'>Create Business Profile</Text>} />
+
+
+                </View>
+
+                <Text className='text-[#636F85] font-bold text-xl my-2'>Business Name *</Text>
+                <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4 justify-between mb-4'>
+                    <View className='flex-row items-center gap-5 justify-center'>
+                        <TextInput
+                            placeholder="Enter Business Name"
+                            placeholderTextColor="#A0A0A0"
+                            value={businessName}
+                            onChangeText={setBusinessName}
+                        />
+                    </View>
                     
-
                 </View>
-
-                <Text className='text-[#636F85] font-bold text-xl my-2'>Old Password</Text>
+                <Text className='text-[#636F85] font-bold text-xl my-2'>Business Details *</Text>
                 <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4 justify-between mb-4'>
                     <View className='flex-row items-center gap-5 justify-center'>
-                        <Entypo name="lock" size={24} color="#334155" />
                         <TextInput
-                            placeholder="****************"
+                            placeholder="Enter Business Details"
                             placeholderTextColor="#A0A0A0"
-                            value={oldPassword}
-                            onChangeText={setOldPassword}
-                            secureTextEntry={!showPassword}
+                            value={businessDetails}
+                            onChangeText={setBusinessDetails}
                         />
                     </View>
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <Ionicons name="eye-outline" size={24} color="black" /> : <Ionicons name="eye-off-outline" size={24} color="black" />}
-                    </TouchableOpacity>
                 </View>
-                <Text className='text-[#636F85] font-bold text-xl my-2'>New Password</Text>
-                <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4 justify-between mb-4'>
-                    <View className='flex-row items-center gap-5 justify-center'>
-                        <Entypo name="lock" size={24} color="#334155" />
-                        <TextInput
-                            placeholder="****************"
-                            placeholderTextColor="#A0A0A0"
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={!showPassword}
-                        />
-                    </View>
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <Ionicons name="eye-outline" size={24} color="black" /> : <Ionicons name="eye-off-outline" size={24} color="black" />}
-                    </TouchableOpacity>
-                </View>
-                <Text className='text-[#636F85] font-bold text-xl my-2'>Confirm Password</Text>
+                <Text className='text-[#636F85] font-bold text-xl my-2'>Website</Text>
                 <View className='border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4 justify-between mb-56'>
                     <View className='flex-row items-center gap-5 justify-center'>
-                        <Entypo name="lock" size={24} color="#334155" />
                         <TextInput
-                            placeholder="****************"
+                            placeholder="Enter Website"
                             placeholderTextColor="#A0A0A0"
-                            value={confirmPassword}
-                            onChangeText={setConfirmPassword}
-                            secureTextEntry={!showPassword}
+                            value={website}
+                            onChangeText={setWebsite}
                         />
                     </View>
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <Ionicons name="eye-outline" size={24} color="black" /> : <Ionicons name="eye-off-outline" size={24} color="black" />}
-                    </TouchableOpacity>
                 </View>
 
 
@@ -180,7 +156,7 @@ const UpdatePassword = () => {
     )
 }
 
-export default UpdatePassword
+export default AdsApply
 
 
 const styles = StyleSheet.create({

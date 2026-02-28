@@ -1,11 +1,10 @@
 import { IPA_BASE, PROFILE } from "@env";
 import {
-    AntDesign,
     Feather,
     FontAwesome5,
     Ionicons,
     MaterialCommunityIcons,
-    MaterialIcons,
+    MaterialIcons
 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -15,6 +14,7 @@ import React, { useCallback, useState } from "react";
 import { Image, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthStackParamList } from "../../Navigation/types";
+import { Toast, useToast } from "../../components/useToost";
 
 const Card = ({ children, className = "" }: any) => (
     <View className={`bg-white rounded-2xl shadow-sm shadow-black/10 ${className}`}>
@@ -111,6 +111,9 @@ type UserProfile = {
     interests: string[]; // তোমার response এ এটা string array
     refaradal_code: string;
     balance: number;
+    advertiser_status: {
+        status: string;
+    };
     has_claimed_referral: boolean;
     referred_by: string | null;
 };
@@ -121,6 +124,7 @@ const END_POINTS = PROFILE;
 
 const Profile = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const toast = useToast();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [payOpen, setPayOpen] = useState(false);
 
@@ -140,8 +144,9 @@ const Profile = () => {
                             },
                         }
                     );
-
+                    console.log(res.data)
                     setUser(res.data.data);
+                    console.log(user?.advertiser_status?.status)
                 } catch (error) {
                     console.error("Error loading data:", error);
                 }
@@ -152,6 +157,23 @@ const Profile = () => {
     );
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const myAds = () => {
+        if (user?.advertiser_status.status == "not_applied") {
+            navigation.navigate("AdsApply")
+        } else if (user?.advertiser_status.status == "pending") {
+            toast.show({
+                message:
+                    ("Your Business Profile Request Is Pending."),
+                type: 'error',
+                style: 'top',
+            });
+        }
+        else {
+            navigation.navigate("MyAds")
+        }
+
+    }
     return (
         <SafeAreaView className="flex-1 bg-[#F9F9FB]">
 
@@ -220,10 +242,9 @@ const Profile = () => {
                         <RowItem
                             title="Advertise with us"
                             leftIcon={<FontAwesome5 name="paint-brush" size={16} color="#2355B6" />}
-                            onPress={()=> navigation.navigate("MyAds")}
+                            onPress={myAds}
                         />
                     </Card>
-
                     {/* Personal Information */}
                     <Card className="mt-5 px-4 pt-4">
                         <View className="flex-row items-center justify-between mb-2">
@@ -324,7 +345,7 @@ const Profile = () => {
                     </Card>
 
                     {/* Connect */}
-                    <Card className="mt-5 px-4 pt-4">
+                    {/* <Card className="mt-5 px-4 pt-4">
                         <Text className="text-base font-bold text-[#2D2D2D] mb-3">Connect</Text>
 
                         <View className="flex-row justify-between px-1 mb-3">
@@ -354,7 +375,7 @@ const Profile = () => {
                             title="Request Our Services"
                             leftIcon={<MaterialCommunityIcons name="file-document-outline" size={16} color="#636F85" />}
                         />
-                    </Card>
+                    </Card> */}
 
                     {/* Logout */}
                     <TouchableOpacity
@@ -384,6 +405,15 @@ const Profile = () => {
                         routes: [{ name: "SignIn" }],
                     });
                 }}
+            />
+            <Toast
+                style={toast.style}
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                fadeAnim={toast.fadeAnim}
+                buttons={toast.buttons}
+                onHide={toast.hide}
             />
         </SafeAreaView>
     );

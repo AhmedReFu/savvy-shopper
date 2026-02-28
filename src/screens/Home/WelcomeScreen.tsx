@@ -2,12 +2,14 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { Toast, useToast } from '../../components/useToost';
 import { Images } from '../../constants';
 import { AuthStackParamList } from '../../Navigation/types';
 
 
 const WelcomeScreen = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const toast = useToast();
     const [spinnerRotation, setSpinnerRotation] = useState<number>(0);
     const [timer, setTimer] = useState<number>(60);
 
@@ -96,7 +98,17 @@ const WelcomeScreen = () => {
                     );
                 })}
             </View>
+            <Toast
+                style={toast.style}
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                fadeAnim={toast.fadeAnim}
+                buttons={toast.buttons}
+                onHide={toast.hide}
+            />
         </View>
+
 
     )
 }

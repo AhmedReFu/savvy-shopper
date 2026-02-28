@@ -17,4 +17,5 @@ declare module "@env" {
   export const PROFILE_SETUP: string;
   export const PROFILE: string;
   export const CHANGE_PASSWORD: string;
+  export const ADS_APPLY: string;
 }

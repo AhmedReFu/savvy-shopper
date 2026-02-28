@@ -27,4 +27,5 @@ export type AuthStackParamList = {
   MyAds: undefined;
   AdsPerformance: undefined;
   CreateAds: undefined;
+  AdsApply: undefined;
 };

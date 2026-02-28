@@ -13,18 +13,18 @@ import { BlurView } from "expo-blur";
 import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
     Image,
     Modal,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
 import BackButton from "../../components/BackButton";
+import { Toast, useToast } from "../../components/useToost";
 import { Images } from "../../constants";
 import { AuthStackParamList } from "../../Navigation/types";
 
@@ -55,7 +55,7 @@ const EditProfile = () => {
     const [image, setImage] = useState<ImagePicker.ImagePickerResult | null>(
         null
     );
-
+    const toast = useToast()
     const [name, setName] = useState<string>("");
     const [address, setAddress] = useState<string>("");
     const [interestsItem, setInterestsItem] = useState<string[]>([]);
@@ -106,7 +106,12 @@ const EditProfile = () => {
                 setInterestsItem(safeParseInterests(u?.interests));
             } catch (error: any) {
                 console.error("Error loading data:", error?.response?.data || error);
-                Alert.alert("Error", "Failed to load profile");
+                toast.show({
+                    message:
+                        ("Failed to load profile information."),
+                    type: 'error',
+                    style: 'top',
+                });
             } finally {
                 setLoading(false);
             }
@@ -120,10 +125,13 @@ const EditProfile = () => {
             await ImagePicker.requestMediaLibraryPermissionsAsync();
 
         if (!permissionResult.granted) {
-            Alert.alert(
-                "Permission required",
-                "Permission to access the media library is required."
-            );
+
+            toast.show({
+                message:
+                    ("Permission required" + "Permission to access the media library is required."),
+                type: 'error',
+                style: 'top',
+            });
             return;
         }
 
@@ -150,17 +158,32 @@ const EditProfile = () => {
         const token = await AsyncStorage.getItem("vToken");
 
         if (!token) {
-            Alert.alert("Error", "Token missing");
+            toast.show({
+                message:
+                    ("Token missing"),
+                type: 'error',
+                style: 'top',
+            });
             return;
         }
 
         if (!name.trim()) {
-            Alert.alert("Error", "Please enter your name");
+            toast.show({
+                message:
+                    ("Please enter your name"),
+                type: 'error',
+                style: 'top',
+            });
             return;
         }
 
         if (!address.trim()) {
-            Alert.alert("Error", "Please enter your address");
+            toast.show({
+                message:
+                    ("Please enter your address"),
+                type: 'error',
+                style: 'top',
+            });
             return;
         }
 
@@ -190,16 +213,27 @@ const EditProfile = () => {
                     "Content-Type": "multipart/form-data",
                 },
             });
-
-            if (res.data?.success) {
+            console.log(res.data?.success)
+            if (res.data.success == true) {
                 setShowSuccessModal(true);
             } else {
-                Alert.alert("Failed", "Profile update failed");
+                toast.show({
+                    message:
+                        ("Profile update failed"),
+                    type: 'warning',
+                    style: 'top',
+                });
             }
         } catch (error: any) {
             console.error("PATCH error:", error?.response?.data || error);
-            Alert.alert("Error", error?.response?.data?.message || "Update failed");
-        }
+            toast.show({
+                message:
+                    ("Error" + error?.response?.data?.message || "Update failed"),
+                type: 'warning',
+                style: 'top',
+            });
+            return { ok: false, phone: '' };
+        } 
     };
 
     // success modal auto close + go back
@@ -402,6 +436,15 @@ const EditProfile = () => {
                     </View>
                 </View>
             </Modal>
+            <Toast
+                style={toast.style}
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                fadeAnim={toast.fadeAnim}
+                buttons={toast.buttons}
+                onHide={toast.hide}
+            />
         </SafeAreaView>
     );
 };
