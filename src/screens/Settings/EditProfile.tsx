@@ -14,7 +14,10 @@ import * as ImagePicker from "expo-image-picker";
 import React, { useEffect, useMemo, useState } from "react";
 import {
     Image,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -233,7 +236,7 @@ const EditProfile = () => {
                 style: 'top',
             });
             return { ok: false, phone: '' };
-        } 
+        }
     };
 
     // success modal auto close + go back
@@ -280,6 +283,8 @@ const EditProfile = () => {
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
+
+
             <View className="px-5">
                 <View className="flex-row items-center gap-4">
                     <AppHeader
@@ -287,101 +292,124 @@ const EditProfile = () => {
                         middle={() => <Text className="text-lg font-semibold">Edit Profile</Text>}
                     />
                 </View>
-
-                {/* Avatar */}
-                <TouchableOpacity onPress={pickImage} activeOpacity={0.9}>
-                    <View className="items-center my-2">
-                        <View
-
-
-                            className="w-32 h-32 rounded-full bg-white items-center justify-center shadow-sm shadow-black/10 overflow-hidden"
-                        >
-                            {avatarUri ? (
-                                <Image
-                                    source={{ uri: avatarUri }}
-                                    style={{ width: "100%", height: "100%" }}
-                                    resizeMode="cover"
-                                />
-                            ) : (
-                                <MaterialCommunityIcons name="account" size={64} color="#D1D6DB" />
-                            )}
-                        </View>
-                    </View>
-
-                    <View className="absolute right-[130px] bottom-[20px]">
-                        <View className="bg-white rounded-full p-[2px]">
-                            <MaterialIcons name="add-circle" size={26} color="#2355B6" />
-                        </View>
-                    </View>
-                </TouchableOpacity>
-
-                {/* Name */}
-                <Text className="text-[#636F85] font-bold text-xl my-2">Full Name</Text>
-                <View className="border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4">
-                    <FontAwesome name="user" size={24} color="#334155" />
-                    <TextInput
-                        placeholder="Your Name ex: Ahmed ReFat"
-                        placeholderTextColor="#A0A0A0"
-                        value={name}
-                        onChangeText={setName}
-                        className="text-lg flex-1"
-                    />
-                </View>
-
-                {/* Email */}
-                <Text className="text-[#636F85] font-bold text-xl my-2">Email address</Text>
-                <View className="bg-gray-200 border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4">
-                    <MaterialIcons name="email" size={24} color="#334155" />
-                    <Text className="text-lg p-3">{user?.email || ""}</Text>
-                </View>
-
-                {/* Address */}
-                <Text className="text-[#636F85] font-bold text-xl my-2">Location</Text>
-                <View className="border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4">
-                    <Ionicons name="location-sharp" size={26} color="black" />
-                    <TextInput
-                        value={address}
-                        onChangeText={setAddress}
-                        placeholder="e.g. Gulshan, Dhaka"
-                        className="text-lg flex-1"
-                    />
-                </View>
-
-                {/* Interests */}
-                <Text className="text-xl my-4">Interests</Text>
-                <View className="flex-row flex-wrap gap-3 my-3">
-                    {interests.map((item, index) => {
-                        const active = interestsItem.includes(item);
-                        return (
-                            <TouchableOpacity
-                                key={index}
-                                onPress={() => toggle(item)}
-                                className={`border rounded-full py-3 px-6 ${active
-                                    ? "border-[#2355B6] border-2 bg-[#2355B61A]"
-                                    : "border-[#D1D6DB]"
-                                    }`}
-                            >
-                                <Text className={`text-lg ${active ? "text-[#2355B6] font-semibold" : ""}`}>
-                                    {item}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </View>
-
-                {/* Save */}
-                <TouchableOpacity
-                    style={styles.mainButton}
-                    onPress={handleSaveChanges}
-                    className="flex-row items-center justify-center gap-4"
-                    disabled={loading}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0} // adjust if header overlaps
                 >
-                    <Text style={styles.mainButtonText}>
-                        {loading ? "Loading..." : "Save Changes"}
-                    </Text>
-                </TouchableOpacity>
-            </View>
+                    <ScrollView
+                        contentContainerStyle={{ paddingBottom: 30 }}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}
+                    >
+                        {/* Avatar */}
+                        <TouchableOpacity onPress={pickImage} activeOpacity={0.9}>
+                            <View style={{ alignSelf: "center", position: "relative" }}>
+                                <View
+                                    style={{
+                                        width: 128,
+                                        height: 128,
+                                        borderRadius: 64,
+                                        backgroundColor: "white",
+                                        overflow: "hidden",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                >
+                                    {avatarUri ? (
+                                        <Image
+                                            source={{ uri: avatarUri }}
+                                            style={{ width: "100%", height: "100%" }}
+                                            resizeMode="cover"
+                                        />
+                                    ) : (
+                                        <MaterialCommunityIcons name="account" size={64} color="#D1D6DB" />
+                                    )}
+                                </View>
 
+                                <View
+                                    style={{
+                                        position: "absolute",
+                                        right: 6,
+                                        bottom: 6,
+                                        backgroundColor: "white",
+                                        borderRadius: 999,
+                                        padding: 2,
+                                    }}
+                                >
+                                    <MaterialIcons name="add-circle" size={28} color="#2355B6" />
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Name */}
+                        <Text className="text-[#636F85] font-bold text-xl my-2">Full Name</Text>
+                        <View className="border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4" style={styles.inputRow}>
+                            <FontAwesome name="user" size={24} color="#334155" />
+                            <TextInput
+                                placeholder="Your Name ex: Ahmed ReFat"
+                                placeholderTextColor="#A0A0A0"
+                                value={name}
+                                onChangeText={setName}
+                                style={styles.textInput}
+                            />
+                        </View>
+
+                        {/* Email */}
+                        <Text className="text-[#636F85] font-bold text-xl my-2">Email address</Text>
+                        <View className="bg-gray-200 border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4">
+                            <MaterialIcons name="email" size={24} color="#334155" />
+                            <Text className="text-lg p-3">{user?.email || ""}</Text>
+                        </View>
+
+                        {/* Address */}
+                        <Text className="text-[#636F85] font-bold text-xl my-2">Location</Text>
+                        <View className="border rounded-2xl border-[#D1D6DB] flex-row p-2 items-center gap-4 pl-4" style={styles.inputRow}>
+                            <Ionicons name="location-sharp" size={24} color="black" />
+                            <TextInput
+                                value={address}
+                                onChangeText={setAddress}
+                                placeholder="e.g. Gulshan, Dhaka"
+                                style={styles.textInput}
+                            />
+                        </View>
+
+                        {/* Interests */}
+                        <Text className="text-xl my-4">Interests</Text>
+                        <View className="flex-row flex-wrap gap-3 my-3">
+                            {interests.map((item, index) => {
+                                const active = interestsItem.includes(item);
+                                return (
+                                    <TouchableOpacity
+                                        key={index}
+                                        onPress={() => toggle(item)}
+                                        className={`border rounded-full py-3 px-6 ${active
+                                            ? "border-[#2355B6] border-2 bg-[#2355B61A]"
+                                            : "border-[#D1D6DB]"
+                                            }`}
+                                    >
+                                        <Text className={`text-lg ${active ? "text-[#2355B6] font-semibold" : ""}`}>
+                                            {item}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+
+                        {/* Save */}
+                        <TouchableOpacity
+                            style={styles.mainButton}
+                            onPress={handleSaveChanges}
+                            className="flex-row items-center justify-center gap-4"
+                            disabled={loading}
+                        >
+                            <Text style={styles.mainButtonText}>
+                                {loading ? "Loading..." : "Save Changes"}
+                            </Text>
+                        </TouchableOpacity>
+
+                    </ScrollView>
+                </KeyboardAvoidingView>
+            </View>
             {/* Success Modal */}
             <Modal
                 transparent
@@ -445,6 +473,7 @@ const EditProfile = () => {
                 buttons={toast.buttons}
                 onHide={toast.hide}
             />
+
         </SafeAreaView>
     );
 };
@@ -463,5 +492,20 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         color: "#FFFFFF",
+    },
+    inputRow: {
+        backgroundColor: '#F5F5F5',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingVertical: Platform.OS === 'ios' ? 14 : 10, // ✅ iOS fix
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    textInput: {
+        flex: 1,
+        fontSize: 18,
+        // ✅ iOS TextInput baseline/height fix
+        paddingVertical: Platform.OS === 'ios' ? 0 : 2,
+        color: '#111827',
     },
 });

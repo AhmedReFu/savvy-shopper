@@ -178,10 +178,10 @@ const Profile = () => {
         <SafeAreaView className="flex-1 bg-[#F9F9FB]">
 
             <View className="px-5 ">
-                    {/* Header */}
+                {/* Header */}
                 <View className="items-center my-2">
                         <Text className="text-lg font-bold text-[#2D2D2D]">My Profile</Text>
-                    </View>
+                </View>
                 <ScrollView className="mb-28" showsVerticalScrollIndicator={false}>
                     {/* Avatar */}
                     <View className="items-center">

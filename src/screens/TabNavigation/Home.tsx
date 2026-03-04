@@ -242,7 +242,7 @@ const Home = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+
                 {/* Header Section */}
                 <View style={styles.header}>
                     <View>
@@ -256,7 +256,7 @@ const Home = () => {
                     </Pressable>
 
                 </View>
-
+            <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Search Bar */}
                 <Pressable style={styles.searchContainer} onPress={() => navigation.navigate("SearchProduct")}>
                     <EvilIcons name="search" size={40} color="#94A3B8" />
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 10,
-        marginBottom: 16,
+        marginBottom: 4,
     },
     greeting: {
         fontSize: 16,
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
         flexDirection: 'row',
-        paddingVertical: 12,
+        paddingVertical: 10,
         paddingHorizontal: 12,
         marginHorizontal: 20,
         marginBottom: 20,
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 20,
-        marginRight: 20,
+        marginRight: 16,
         gap: 6,
     },
     categoryButtonActive: {

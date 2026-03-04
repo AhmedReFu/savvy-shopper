@@ -4,7 +4,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import axios from 'axios';
 import React, { useState } from 'react';
-import { Alert, Dimensions, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Image, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 import BackButton from '../../components/BackButton';
@@ -77,41 +77,46 @@ const ResetPassword = () => {
                   <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
               </View>
 
-              <View className="mt-10 flex-1">
-                  <Text className="text-3xl text-center font-bold">Reset Password</Text>
-                  <Text className="text-xl text-center text-[#636F85] my-4">
-                      Enter your email, we will send a verification
-                      code to your email.
-                  </Text>
-
-                  
-                  <Text style={styles.label}>Email address </Text>
-                  <View style={styles.passwordContainer} className='border'>
-                      <MaterialIcons name="email" size={24} color="#334155" />
-                      <TextInput
-                          style={styles.input}
-                          placeholder="demo@gmail.com"
-                          placeholderTextColor="#A0A0A0"
-                          value={email}
-                          onChangeText={setEmail}
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                      />
-                  </View>
-                  <View className='h-30 w-40'>
-                     
-                  </View>
-
-                  <TouchableOpacity
-                      style={styles.mainButton}
-                      activeOpacity={0.9}
-                      onPress={hadnleResetPassword}
-                  >
-                      <Text style={styles.mainButtonText}>
-                          Continue
+              <KeyboardAvoidingView
+                  behavior={Platform.OS === "ios" ? "padding" : "height"}
+                  keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0} // adjust if header overlaps
+              >
+                  <View className="mt-10 flex-1">
+                      <Text className="text-3xl text-center font-bold">Reset Password</Text>
+                      <Text className="text-xl text-center text-[#636F85] my-4">
+                          Enter your email, we will send a verification
+                          code to your email.
                       </Text>
-                  </TouchableOpacity>
-              </View>
+
+
+                      <Text style={styles.label}>Email address </Text>
+                      <View style={styles.passwordContainer} className='border'>
+                          <MaterialIcons name="email" size={24} color="#334155" />
+                          <TextInput
+                              style={styles.input}
+                              placeholder="demo@gmail.com"
+                              placeholderTextColor="#A0A0A0"
+                              value={email}
+                              onChangeText={setEmail}
+                              keyboardType="email-address"
+                              autoCapitalize="none"
+                          />
+                      </View>
+                      <View className='h-30 w-40'>
+
+                      </View>
+
+                      <TouchableOpacity
+                          style={styles.mainButton}
+                          activeOpacity={0.9}
+                          onPress={hadnleResetPassword}
+                      >
+                          <Text style={styles.mainButtonText}>
+                              Continue
+                          </Text>
+                      </TouchableOpacity>
+                  </View>
+              </KeyboardAvoidingView>
           </View>
 
          

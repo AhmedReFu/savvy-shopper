@@ -70,23 +70,29 @@ const Cart = () => {
           <Text className="text-[#636F85]">Clear All</Text>
         </View>
 
-        <View className="flex-row items-center justify-between border-2 border-[#E5E7EB] rounded-3xl px-4 py-2 mt-4">
+        <View className="flex-row items-center border-2 border-[#E5E7EB] rounded-2xl px-4 py-2 gap-4 mt-4">
+
           <View className='bg-[#2355B61A] p-4 rounded-full'>
             <MaterialIcons name="electric-bolt" size={24} color="#2355B6" />
           </View>
-          <View>
-            <Text className='text-xl font-bold'>Optimize Cart</Text>
-            <Text className='text-lg'>Find lowest prices across stores</Text>
+
+          <View className="flex-1">
+            <Text className='text-xl font-bold'>
+              Optimize Cart
+            </Text>
+            <Text className='text-gray-500 '>
+              Find lowest prices across stores
+            </Text>
           </View>
-          <View>
-            <Switch
-              trackColor={{ false: '#767577', true: '#2355B6' }}
-              thumbColor={'#f4f3f4'}
-              ios_backgroundColor="#3e3e3e"
-              onValueChange={toggleSwitch}
-              value={isEnabled}
-            />
-          </View>
+
+          <Switch
+            trackColor={{ false: '#767577', true: '#2355B6' }}
+            thumbColor={'#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={toggleSwitch}
+            value={isEnabled}
+          />
+
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} className="mt-6 mb-48">
