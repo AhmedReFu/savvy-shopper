@@ -1,5 +1,6 @@
 import { IPA_BASE, PROFILE } from "@env";
 import {
+    Entypo,
     Feather,
     FontAwesome5,
     Ionicons,
@@ -108,10 +109,13 @@ type UserProfile = {
     email: string;
     profile_picture: string;
     address: string;
-    interests: string[]; // তোমার response এ এটা string array
+    interests: string[]; 
     refaradal_code: string;
     balance: number;
     advertiser_status: {
+        status: string;
+    };
+    seller_status: {
         status: string;
     };
     has_claimed_referral: boolean;
@@ -157,6 +161,23 @@ const Profile = () => {
     );
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const shop = () => {
+
+        if (user?.seller_status.status == "not_applied") {
+            navigation.navigate("ShopCreate")
+        } else if (user?.seller_status.status == "pending") {
+            toast.show({
+                message:
+                    ("Your Shop Request Is Pending."),
+                type: 'error',
+                style: 'top',
+            });
+        }
+        else {
+            navigation.navigate("ShopDashboard")
+        }
+    }
 
     const myAds = () => {
         if (user?.advertiser_status.status == "not_applied") {
@@ -236,6 +257,16 @@ const Profile = () => {
                             iconBg="#FEF3C7"
                         />
                     </View>
+                    {/* Shop Create and Manage */}
+                    <Card className="mt-5 px-4">
+                        <RowItem
+                            title="Shop"
+                            leftIcon={
+                                <Entypo name="shop" size={16} color="#2355B6" />
+                            }
+                            onPress={shop}
+                        />
+                    </Card>
 
                     {/* Advertise with us */}
                     <Card className="mt-5 px-4">

@@ -8,36 +8,29 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
+      "bundleIdentifier": "com.ahmedrefu.savvyshopper",
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs camera access to scan product barcodes and QR codes.",
         "NSPhotoLibraryUsageDescription": "This app needs photo library access to upload product images.",
+        "ITSAppUsesNonExemptEncryption": false,
         "SKAdNetworkItems": [
           {
             "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
           },
           {
             "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
-          },
-          {
-            "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork"
-          },
-          {
-            "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork"
           }
-        ],
-        "ITSAppUsesNonExemptEncryption": false
-      },
-      "bundleIdentifier": "com.ahmedrefu.savvyshopper"
+        ]
+      }
     },
+
     "android": {
+      "package": "com.ahmedrefu.savvyshopper",
       "softwareKeyboardLayoutMode": "pan",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -45,12 +38,19 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.INTERNET"
       ],
-      "package": "com.ahmedrefu.savvyshopper"
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
     },
+
     "plugins": [
+      "expo-document-picker",
+
       [
         "expo-apple-authentication"
       ],
@@ -78,11 +78,13 @@
       ],
       "@react-native-community/datetimepicker"
     ],
+
     "extra": {
       "eas": {
         "projectId": "9f42c994-ba0b-4b26-91cd-aad2744d2851"
       }
     },
+
     "owner": "ahmedrefu"
   }
 }

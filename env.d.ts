@@ -21,4 +21,11 @@ declare module "@env" {
   export const ADS_CREATE: string;
   export const MY_ADS: string;
   export const ADS_DETAILS: string;
+  export const SHOP_APPLY: string;
+  export const ADD_PRODUCT: string;
+  export const SHOP_DETAILS: string;
+  export const SHOP_PRODUCT: string;
+  export const SHOP_ORDERS: string;
+  export const SHOP_COUPONS: string;
+  export const CREATE_COUPON: string;
 }
