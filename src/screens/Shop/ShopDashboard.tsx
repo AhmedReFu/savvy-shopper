@@ -66,11 +66,11 @@ type ProductItem = {
     brand: string;
     model_number: string;
     price: string;
-    original_price: string;
+    original_price: string | null;
     currency: string;
     quantity: number;
     condition: string;
-    main_image: string;
+    main_image: string | null;
     images: string[];
     free_shipping: boolean;
     shipping_cost: string;
@@ -103,7 +103,7 @@ type OrderProduct = {
     currency: string;
     quantity: number;
     condition: string;
-    main_image: string;
+    main_image: string | null;
     images: string[];
     free_shipping: boolean;
     shipping_cost: string;
@@ -175,17 +175,14 @@ type CouponItem = {
     created_at: string;
 };
 
-type CouponResponse = {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: CouponItem[];
-};
-
 const buildImageUrl = (path?: string | null) => {
     if (!path) return '';
     if (path.startsWith('http://') || path.startsWith('https://')) return path;
     return `${API_BASE_URL}${path}`;
+};
+
+const ensureArray = <T,>(value: unknown): T[] => {
+    return Array.isArray(value) ? (value as T[]) : [];
 };
 
 const getProductStatusStyle = (status: string) => {
@@ -279,6 +276,7 @@ const ShopDashboard = () => {
         setErrorMsg('');
 
         const token = await AsyncStorage.getItem('vToken');
+
         if (!token) {
             setErrorMsg('Token missing');
             setLoading(false);
@@ -302,15 +300,40 @@ const ShopDashboard = () => {
             ]);
 
             setShopDetails(shopRes?.data?.data ?? null);
-            setProducts(productRes?.data?.data ?? []);
-            setOrders(ordersRes?.data?.data ?? []);
 
-            const couponData: CouponResponse | undefined = couponsRes?.data;
-            setCoupons(couponData?.results ?? []);
-            setCouponCount(couponData?.count ?? 0);
+            // products response: { data: { products: [] } }
+            const productList =
+                productRes?.data?.data?.products ??
+                productRes?.data?.products ??
+                productRes?.data?.data ??
+                [];
+
+            setProducts(ensureArray<ProductItem>(productList));
+
+            // orders response unknown, so safe fallback
+            const orderList =
+                ordersRes?.data?.data?.orders ??
+                ordersRes?.data?.orders ??
+                ordersRes?.data?.data ??
+                ordersRes?.data?.results ??
+                ordersRes?.data ??
+                [];
+
+            setOrders(ensureArray<OrderItem>(orderList));
+
+            // coupons response: []
+            const couponList = couponsRes?.data;
+            const safeCoupons = ensureArray<CouponItem>(couponList);
+
+            setCoupons(safeCoupons);
+            setCouponCount(safeCoupons.length);
         } catch (err: any) {
             console.error('Error loading shop dashboard:', err?.response?.data || err);
             setErrorMsg(err?.response?.data?.message || 'Failed to load shop data');
+            setProducts([]);
+            setOrders([]);
+            setCoupons([]);
+            setCouponCount(0);
         } finally {
             setLoading(false);
         }
@@ -323,14 +346,18 @@ const ShopDashboard = () => {
     );
 
     const stats = useMemo(() => {
-        const approved = products.filter((item) => item.status === 'APPROVED').length;
-        const pending = products.filter((item) => item.status === 'PENDING').length;
-        const rejected = products.filter((item) => item.status === 'REJECTED').length;
+        const safeProducts = ensureArray<ProductItem>(products);
+        const safeOrders = ensureArray<OrderItem>(orders);
+        const safeCoupons = ensureArray<CouponItem>(coupons);
+
+        const approved = safeProducts.filter((item) => item.status === 'APPROVED').length;
+        const pending = safeProducts.filter((item) => item.status === 'PENDING').length;
+        const rejected = safeProducts.filter((item) => item.status === 'REJECTED').length;
 
         return {
-            totalProducts: products.length,
-            totalOrders: orders.length,
-            totalCoupons: couponCount || coupons.length,
+            totalProducts: safeProducts.length,
+            totalOrders: safeOrders.length,
+            totalCoupons: couponCount || safeCoupons.length,
             approved,
             pending,
             rejected,
@@ -553,13 +580,6 @@ const ShopDashboard = () => {
                             {item.status_display}
                         </Text>
                     </View>
-
-                    {/* <Pressable className="flex-row items-center" onPress={() => { }}>
-                        <Text className="text-[#1F56D8] text-[16px] font-semibold mr-2">
-                            View
-                        </Text>
-                        <MaterialIcons name="arrow-forward" size={20} color="#1F56D8" />
-                    </Pressable> */}
                 </View>
             </View>
         );
@@ -597,17 +617,17 @@ const ShopDashboard = () => {
                             </Text>
 
                             <Text className="text-[14px] text-[#7A8192] mt-1">
-                               Buyer Email: {item?.buyer_email }
+                                Buyer Email: {item?.buyer_email}
                             </Text>
                             <Text className="text-[14px] text-[#7A8192] mt-1">
                                 Quantity: {item?.quantity}
                             </Text>
                             <Text className="text-[14px] text-[#7A8192] mt-1">
-                               Shipping Address: {item?.shipping_address}
+                                Shipping Address: {item?.shipping_address}
                             </Text>
 
                             <Text className="text-[16px] text-[#111827] font-bold mt-2">
-                               Price: ${item.total_price}{' '}
+                                Price: ${item.total_price}{' '}
                                 <Text className="text-[#8A92A3] font-medium">
                                     / {item.currency?.toUpperCase()}
                                 </Text>
@@ -842,7 +862,7 @@ const ShopDashboard = () => {
 
     return (
         <SafeAreaView className="bg-[#F9F9FB] flex-1">
-            <StatusBar style='auto'/>
+            <StatusBar style="auto" />
             <View className="px-5 flex-1">
                 <View className="flex-row items-center gap-4">
                     <AppHeader left={() => <BackButton />} />

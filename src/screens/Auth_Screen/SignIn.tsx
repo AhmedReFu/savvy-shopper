@@ -185,11 +185,10 @@ const SignIn = () => {
             const data = res.data;
             console.log(data.data.access)
             if (data?.success === true) {
+                await AsyncStorage.setItem("vToken", data.data.access)
                 if (rememberMe) {
-                    await AsyncStorage.setItem('rememberedEmail', email.trim().toLowerCase());
-                    await AsyncStorage.setItem("vToken", data.data.access)
+                    await AsyncStorage.setItem('rememberedEmail', email.trim().toLowerCase()); 
                 }
-
                 setShowSuccessModal(true);
                 setTimeout(() => {
                     setShowSuccessModal(false);

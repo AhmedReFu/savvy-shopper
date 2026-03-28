@@ -1,5 +1,6 @@
 import { IPA_BASE, PROFILE } from "@env";
 import {
+    AntDesign,
     Entypo,
     Feather,
     FontAwesome5,
@@ -150,7 +151,7 @@ const Profile = () => {
                     );
                     console.log(res.data)
                     setUser(res.data.data);
-                    console.log(user?.advertiser_status?.status)
+                    // console.log(user?.advertiser_status?.status)
                 } catch (error) {
                     console.error("Error loading data:", error);
                 }
@@ -342,21 +343,21 @@ const Profile = () => {
                             title="Contact Us"
                             leftIcon={<Ionicons name="person-circle-outline" size={16} color="#636F85" />}
                         />
-                        <Divider />
+                        {/* <Divider />
                         <RowItem
                             title="Video Demo"
                             leftIcon={<Ionicons name="videocam-outline" size={16} color="#636F85" />}
-                        />
-                        <Divider />
-                        <RowItem
+                        /> */}
+                        {/* <Divider /> */}
+                        {/* <RowItem
                             title="Press"
                             leftIcon={<MaterialCommunityIcons name="newspaper-variant-outline" size={16} color="#636F85" />}
-                        />
-                        <Divider />
-                        <RowItem
+                        /> */}
+                        {/* <Divider /> */}
+                        {/* <RowItem
                             title="Events"
                             leftIcon={<Ionicons name="calendar-outline" size={16} color="#636F85" />}
-                        />
+                        /> */}
                     </Card>
 
                     {/* Legal */}
@@ -376,37 +377,37 @@ const Profile = () => {
                     </Card>
 
                     {/* Connect */}
-                    {/* <Card className="mt-5 px-4 pt-4">
+                    <Card className="mt-5 px-4 pt-4">
                         <Text className="text-base font-bold text-[#2D2D2D] mb-3">Connect</Text>
 
                         <View className="flex-row justify-between px-1 mb-3">
+                            {/* <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
+                                <Ionicons name="logo-whatsapp" size={20} color="green" />
+                            </View> */}
                             <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
-                                <Ionicons name="logo-whatsapp" size={20} color="#636F85" />
+                                <Ionicons name="logo-tiktok" size={20} color="black" />
                             </View>
                             <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
-                                <Ionicons name="logo-tiktok" size={20} color="#636F85" />
+                                <AntDesign name="x" size={18} color="black" />
                             </View>
                             <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
-                                <AntDesign name="x" size={18} color="#636F85" />
+                                <Ionicons name="logo-facebook" size={20} color="blue" />
                             </View>
                             <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
-                                <Ionicons name="logo-facebook" size={20} color="#636F85" />
+                                <Ionicons name="logo-youtube" size={20} color="red" />
                             </View>
                             <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
-                                <Ionicons name="logo-youtube" size={20} color="#636F85" />
-                            </View>
-                            <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
-                                <Ionicons name="logo-instagram" size={20} color="#636F85" />
+                                <Ionicons name="logo-instagram" size={20} color="red" />
                             </View>
                         </View>
 
                         <Divider />
 
-                        <RowItem
+                        {/* <RowItem
                             title="Request Our Services"
                             leftIcon={<MaterialCommunityIcons name="file-document-outline" size={16} color="#636F85" />}
-                        />
-                    </Card> */}
+                        /> */}
+                    </Card> 
 
                     {/* Logout */}
                     <TouchableOpacity

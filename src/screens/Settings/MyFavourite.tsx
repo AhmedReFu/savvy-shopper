@@ -1,11 +1,15 @@
+import { ALL_FAVORITE, IPA_BASE, REMOVE_FAVORITE } from "@env";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
-import React, { useMemo, useState } from "react";
+import axios from "axios";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     Dimensions,
+    FlatList,
     Image,
     Pressable,
-    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -14,161 +18,268 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AppHeader from "../../components/AppHeader";
 import BackButton from "../../components/BackButton";
+import { Toast, useToast } from "../../components/useToost";
 import { AuthStackParamList } from "../../Navigation/types";
 
 const { width } = Dimensions.get("window");
 
+const API_BASE_URL = IPA_BASE;
+
+type FavoriteProductData = {
+    id: number;
+    title: string;
+    slug?: string;
+    brand?: string;
+    category?: number | null;
+    category_name?: string | null;
+    main_image: string | null;
+    lowest_price?: number;
+    price?: string;
+    original_price?: string | null;
+    discount_percentage?: number | null;
+    listings_count?: number;
+    available_on?: string[];
+    seller_shop?: string;
+    is_active?: boolean;
+    created_at?: string;
+};
+
+type ApiFavoriteItem = {
+    id: number;
+    product: FavoriteProductData;
+    created_at?: string;
+};
+
+type UiProduct = {
+    id: string;
+    favoriteId: number;
+    productId: number;
+    name: string;
+    price: number;
+    originalPrice: number;
+    discount: string;
+    image: string;
+    seller: string;
+};
+
 const MyFavourite = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const toast = useToast();
 
-    const recommendedProducts = useMemo(
-        () => [
-            {
-                id: "3",
-                name: "MacBook Air M2",
-                price: 999,
-                originalPrice: 1099,
-                discount: "-10%",
-                image:
-                    "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800",
-                seller: "Amazon",
-            },
-            {
-                id: "4",
-                name: "Sony WH-1000XM5",
-                price: 299,
-                originalPrice: 399,
-                discount: "-40%",
-                image:
-                    "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=800",
-                seller: "Best Buy",
-            },
-            {
-                id: "5",
-                name: "iPhone 18 Case",
-                price: 25,
-                originalPrice: 28,
-                discount: "-08%",
-                image:
-                    "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800",
-                seller: "Amazon",
-            },
-            {
-                id: "6",
-                name: "Wireless Buds",
-                price: 55,
-                originalPrice: null,
-                discount: "",
-                image:
-                    "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
-                seller: "Amazon",
-            },
-            {
-                id: "7",
-                name: "Air Zoom Pegasus 39",
-                price: 299,
-                originalPrice: 399,
-                discount: "-40%",
-                image:
-                    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800",
-                seller: "Amazon",
-            },
-            {
-                id: "8",
-                name: "Sony Earbuds",
-                price: 999,
-                originalPrice: 1099,
-                discount: "-10%",
-                image:
-                    "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400",
-                seller: "BestBuy",
-            },
-        ],
-        []
+    const [products, setProducts] = useState<ApiFavoriteItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+    const [removeLoadingIds, setRemoveLoadingIds] = useState<Set<string>>(new Set());
+
+    const buildImageUrl = (path?: string | null) => {
+        if (!path) {
+            return "https://via.placeholder.com/400x400/F1F5F9/94A3B8?text=No+Image";
+        }
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+            return path;
+        }
+        return `${API_BASE_URL}${path}`;
+    };
+
+    const mapProductToUi = useCallback((item: ApiFavoriteItem): UiProduct => {
+        const product = item.product;
+
+        const finalPrice =
+            typeof product?.lowest_price === "number"
+                ? product.lowest_price
+                : Number(product?.price ?? 0);
+
+        const originalPrice =
+            product?.original_price != null && product.original_price !== ""
+                ? Number(product.original_price)
+                : finalPrice;
+
+        const discount =
+            product?.discount_percentage && product.discount_percentage > 0
+                ? `-${Math.round(product.discount_percentage)}%`
+                : originalPrice > finalPrice && originalPrice > 0
+                    ? `-${Math.round(((originalPrice - finalPrice) / originalPrice) * 100)}%`
+                    : "";
+
+        return {
+            id: String(item.id),
+            favoriteId: item.id,
+            productId: product.id,
+            name: product.title,
+            price: finalPrice,
+            originalPrice,
+            discount,
+            image: buildImageUrl(product.main_image),
+            seller: product.available_on?.[0] || product.seller_shop || product.brand || "Unknown",
+        };
+    }, []);
+
+    const favouriteProducts = useMemo(() => {
+        return products
+            .filter((item) => item?.product?.id)
+            .map(mapProductToUi);
+    }, [products, mapProductToUi]);
+
+    const loadFavorites = useCallback(
+        async (force = false) => {
+            if (hasLoadedOnce && !force) return;
+
+            const token = await AsyncStorage.getItem("vToken");
+
+            if (!token) {
+                toast.show({
+                    message: "Token missing",
+                    type: "error",
+                    style: "top",
+                });
+                return;
+            }
+
+            try {
+                if (force) {
+                    setRefreshing(true);
+                } else {
+                    setLoading(true);
+                }
+
+                const res = await axios.get(`${API_BASE_URL}${ALL_FAVORITE}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                console.log("favorite response:", res.data);
+
+                const favoriteList =
+                    res?.data?.data?.favorites ??
+                    res?.data?.data?.results ??
+                    res?.data?.data ??
+                    res?.data?.results ??
+                    res?.data ??
+                    [];
+
+                setProducts(Array.isArray(favoriteList) ? favoriteList : []);
+                setHasLoadedOnce(true);
+            } catch (error: any) {
+                console.error("Load favorite error:", error?.response?.data || error);
+                setProducts([]);
+                toast.show({
+                    message: error?.response?.data?.message || "Failed to load favorites",
+                    type: "error",
+                    style: "top",
+                });
+            } finally {
+                setLoading(false);
+                setRefreshing(false);
+            }
+        },
+        [hasLoadedOnce, toast]
     );
 
-    // ✅ default all fav
-    const [favorites, setFavorites] = useState<Set<string>>(
-        () => new Set(recommendedProducts.map((p) => p.id))
-    );
+    useEffect(() => {
+        loadFavorites();
+    }, [loadFavorites]);
 
-    // ✅ filter chips
-    const [tab, setTab] = useState<"all" | "price" | "stock">("all");
+    const removeFavorite = async (productId: number) => {
+        const token = await AsyncStorage.getItem("vToken");
 
-    const toggleFavorite = (id: string) => {
-        setFavorites((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
+        if (!token) {
+            toast.show({
+                message: "Token missing",
+                type: "error",
+                style: "top",
+            });
+            return;
+        }
+
+        const id = String(productId);
+
+        try {
+            setRemoveLoadingIds((prev) => {
+                const next = new Set(prev);
+                next.add(id);
+                return next;
+            });
+
+            await axios.post(`${API_BASE_URL}${REMOVE_FAVORITE}`, {
+                product_id: productId,
+            },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+            setProducts((prev) =>
+                prev.filter((item) => item.product?.id !== productId)
+            );
+
+            toast.show({
+                message: "Removed from favorites",
+                type: "success",
+                style: "top",
+            });
+        } catch (error: any) {
+            console.error("Remove favorite error:", error?.response?.data || error);
+            toast.show({
+                message: error?.response?.data?.message || "Failed to remove favorite",
+                type: "error",
+                style: "top",
+            });
+        } finally {
+            setRemoveLoadingIds((prev) => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
     };
 
-    const allFav = favorites.size === recommendedProducts.length;
-
-    const toggleAllFavorites = () => {
-        setFavorites(() => {
-            if (allFav) return new Set();
-            return new Set(recommendedProducts.map((p) => p.id));
-        });
-    };
-
-    const Chip = ({ label, value }: { label: string; value: any }) => {
-        const active = tab === value;
-        return (
-            <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => setTab(value)}
-                style={[
-                    styles.chip,
-                    active ? styles.chipActive : styles.chipInactive,
-                ]}
-            >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                    {label}
-                </Text>
-            </TouchableOpacity>
-        );
-    };
-
-    const ProductCard = ({ product }: any) => {
+    const ProductCard = ({ product }: { product: UiProduct }) => {
         const cardWidth = (width - 50) / 2 - 6;
-        const isFavorite = favorites.has(product.id);
+        const isRemoving = removeLoadingIds.has(String(product.productId));
 
         return (
             <Pressable
-                onPress={() => navigation.navigate("ProductDetails")}
+                onPress={() =>
+                    navigation.navigate("ProductDetails", { productId: product.productId } as never)
+                }
                 style={[styles.productCard, { width: cardWidth }]}
             >
-                {/* image */}
                 <View style={styles.imageContainer}>
-                    <Image source={{ uri: product.image }} style={styles.productImage} />
+                    <Image
+                        source={{ uri: product.image }}
+                        style={styles.productImage}
+                        resizeMode="cover"
+                    />
 
-                    {/* discount */}
                     {!!product.discount && (
                         <View style={styles.discountBadge}>
                             <Text style={styles.discountText}>{product.discount}</Text>
                         </View>
                     )}
 
-                    {/* fav */}
                     <TouchableOpacity
                         style={styles.favoriteButton}
                         activeOpacity={0.85}
                         onPress={(e: any) => {
                             e.stopPropagation?.();
-                            toggleFavorite(product.id);
+                            if (!isRemoving) {
+                                removeFavorite(product.productId);
+                            }
                         }}
                     >
-                        <Ionicons
-                            name={isFavorite ? "heart" : "heart-outline"}
-                            size={18}
-                            color={isFavorite ? "#EF4444" : "#64748B"}
-                        />
+                        {isRemoving ? (
+                            <ActivityIndicator size="small" color="#64748B" />
+                        ) : (
+                            <Ionicons name="heart" size={18} color="#EF4444" />
+                        )}
                     </TouchableOpacity>
                 </View>
 
-                {/* info */}
                 <View style={styles.productInfo}>
                     <Text style={styles.productName} numberOfLines={1}>
                         {product.name}
@@ -176,7 +287,7 @@ const MyFavourite = () => {
 
                     <View style={styles.priceRow}>
                         <Text style={styles.price}>${product.price}</Text>
-                        {product.originalPrice ? (
+                        {product.originalPrice > product.price ? (
                             <Text style={styles.originalPrice}>${product.originalPrice}</Text>
                         ) : null}
                     </View>
@@ -186,7 +297,9 @@ const MyFavourite = () => {
                             <MaterialIcons name="storefront" size={16} color="#94A3B8" />
                         </View>
 
-                        <Text style={styles.sellerText}>{product.seller}</Text>
+                        <Text style={styles.sellerText} numberOfLines={1}>
+                            {product.seller}
+                        </Text>
 
                         <Ionicons name="arrow-forward" size={18} color="#94A3B8" />
                     </View>
@@ -195,45 +308,64 @@ const MyFavourite = () => {
         );
     };
 
+    const renderHeader = () => (
+        <View style={{ paddingHorizontal: 20 }}>
+            <View style={styles.headerRow}>
+                <AppHeader left={() => <BackButton />} />
+                <Text style={styles.headerTitle}>My Favourite</Text>
+            </View>
+        </View>
+    );
+
+    const renderEmpty = () => {
+        if (loading) return null;
+
+        return (
+            <View style={styles.emptyWrap}>
+                <Ionicons name="heart-outline" size={42} color="#94A3B8" />
+                <Text style={styles.emptyTitle}>No favourite products</Text>
+                <Text style={styles.emptyText}>
+                    Your saved favourite items will appear here.
+                </Text>
+            </View>
+        );
+    };
+
+    if (loading && favouriteProducts.length === 0) {
+        return (
+            <SafeAreaView style={{ flex: 1, backgroundColor: "#F9F9FB" }}>
+                <View style={styles.loaderWrap}>
+                    <ActivityIndicator size="large" color="#2563EB" />
+                </View>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#F9F9FB" }}>
-            <View style={{ paddingHorizontal: 20 }}>
-                {/* Header row */}
-                <View style={styles.headerRow}>
-                    <AppHeader left={() => <BackButton />} />
+            <FlatList
+                data={favouriteProducts}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                renderItem={({ item }) => <ProductCard product={item} />}
+                columnWrapperStyle={styles.recommendedGrid}
+                ListHeaderComponent={renderHeader}
+                ListEmptyComponent={renderEmpty}
+                onRefresh={() => loadFavorites(true)}
+                refreshing={refreshing}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingBottom: 80 }}
+            />
 
-                    <Text style={styles.headerTitle}>My Favourite</Text>
-
-                    {/* right heart icon */}
-                    <TouchableOpacity
-                        onPress={toggleAllFavorites}
-                        activeOpacity={0.85}
-                        style={styles.headerHeart}
-                    >
-                        <Ionicons
-                            name={allFav ? "heart" : "heart-outline"}
-                            size={20}
-                            color="#EF4444"
-                        />
-                    </TouchableOpacity>
-                </View>
-
-                {/* Filter chips */}
-                <View style={styles.chipRow}>
-                    <Chip label="All Items" value="all" />
-                    <Chip label="Price Change" value="price" />
-                    <Chip label="In Stock" value="stock" />
-                </View>
-
-                {/* Grid */}
-                <ScrollView showsVerticalScrollIndicator={false} className="mb-20">
-                    <View style={styles.recommendedGrid}>
-                        {recommendedProducts.map((product) => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
-                    </View>
-                </ScrollView>
-            </View>
+            <Toast
+                style={toast.style}
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                fadeAnim={toast.fadeAnim}
+                buttons={toast.buttons}
+                onHide={toast.hide}
+            />
         </SafeAreaView>
     );
 };
@@ -245,6 +377,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
+        marginBottom: 16,
     },
     headerTitle: {
         fontSize: 20,
@@ -252,55 +385,11 @@ const styles = StyleSheet.create({
         color: "#2D2D2D",
         flex: 1,
     },
-    headerHeart: {
-        width: 42,
-        height: 42,
-        borderRadius: 21,
-        backgroundColor: "#fff",
-        alignItems: "center",
-        justifyContent: "center",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-    },
-
-    chipRow: {
-        flexDirection: "row",
-        gap: 14,
-        marginTop: 4,
-        marginBottom: 12,
-    },
-    chip: {
-        paddingHorizontal: 18,
-        paddingVertical: 12,
-        borderRadius: 999,
-        borderWidth: 1.5,
-    },
-    chipActive: {
-        backgroundColor: "#2355B6",
-        borderColor: "#2355B6",
-    },
-    chipInactive: {
-        backgroundColor: "#fff",
-        borderColor: "#D1D6DB",
-    },
-    chipText: {
-        fontSize: 16,
-        fontWeight: "700",
-        color: "#636F85",
-    },
-    chipTextActive: {
-        color: "#fff",
-    },
 
     recommendedGrid: {
-        flexDirection: "row",
-        flexWrap: "wrap",
         justifyContent: "space-between",
-        gap: 20,
-        marginBottom:60
+        paddingHorizontal: 20,
+        marginBottom: 20,
     },
 
     productCard: {
@@ -314,6 +403,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.06,
         shadowRadius: 10,
         elevation: 3,
+        marginBottom: 20,
     },
     imageContainer: {
         position: "relative",
@@ -400,5 +490,29 @@ const styles = StyleSheet.create({
         color: "#64748B",
         flex: 1,
         fontWeight: "700",
+    },
+
+    loaderWrap: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    emptyWrap: {
+        alignItems: "center",
+        justifyContent: "center",
+        marginTop: 80,
+        paddingHorizontal: 24,
+    },
+    emptyTitle: {
+        marginTop: 12,
+        fontSize: 18,
+        fontWeight: "700",
+        color: "#1F2937",
+    },
+    emptyText: {
+        marginTop: 6,
+        fontSize: 14,
+        color: "#64748B",
+        textAlign: "center",
     },
 });

@@ -28,4 +28,11 @@ declare module "@env" {
   export const SHOP_ORDERS: string;
   export const SHOP_COUPONS: string;
   export const CREATE_COUPON: string;
+  export const ALL_PRODUCT: string;
+  export const ADD_FAVORITE: string;
+  export const REMOVE_FAVORITE: string;
+  export const ALL_FAVORITE: string;
+  export const SEARCH_PRODUCT: string;
+  export const CATEGORY_PRODUCT: string;
+  export const CATEGORIES_LIST: string;
 }
