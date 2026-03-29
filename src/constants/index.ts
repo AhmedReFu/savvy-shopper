@@ -1,3 +1,4 @@
+import Aliexpress from "../../assets/aliexpress.png";
 import Amazon from "../../assets/amazon.png";
 import AngleIcon from "../../assets/angle-icon.png";
 import Apple from "../../assets/apple.png";
@@ -26,4 +27,5 @@ export const Images = {
   AngleIcon,
   MoneyStraw,
   ClockIcon,
+  Aliexpress,
 };

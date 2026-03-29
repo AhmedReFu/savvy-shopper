@@ -202,16 +202,16 @@ const MyFavourite = () => {
                 return next;
             });
 
-            await axios.post(`${API_BASE_URL}${REMOVE_FAVORITE}`, {
-                product_id: productId,
-            },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                });
+            await axios.delete(`${API_BASE_URL}${REMOVE_FAVORITE}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    product_id: productId,
+                },
+            });
 
             setProducts((prev) =>
                 prev.filter((item) => item.product?.id !== productId)

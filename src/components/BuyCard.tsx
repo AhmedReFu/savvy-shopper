@@ -1,46 +1,46 @@
+import { Entypo } from '@expo/vector-icons'
 import React from 'react'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Image, StyleSheet, Text, View } from 'react-native'
 
 interface BuyCardProps {
     logo: any // Image source
     title: string
-    subtitle: string
-    price: string
-    buy:string,
+    free_shipping: boolean
+
 }
 
 const BuyCard = ({
     logo,
     title,
-    subtitle,
-    price,
-    buy,
+    free_shipping,
 }: BuyCardProps) => {
     return (
-        <View style={styles.card} className={`${buy === 'true' && 'border-l-8 border-[#2355B6]' }`}>
+        <View style={styles.card} className="border-l-8 border-[#2355B6]">
             {/* Left side - Logo & Info */}
             <View style={styles.leftSection}>
-                <Image source={logo} style={styles.logo} resizeMode="stretch" />
+                {logo ? <Image source={logo} style={styles.logo} resizeMode="stretch" /> : <Entypo name="shop" size={40} color="#2355B6" />}
+
+
                 <View style={styles.textContainer}>
                     <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.subtitle}>{subtitle}</Text>
+                    <Text style={styles.subtitle}>{free_shipping && "Free delivery"}</Text>
                 </View>
             </View>
 
             {/* Right side - Price & Button */}
             <View style={styles.rightSection}>
-                <Text style={styles.price}>{price}</Text>
-                <Pressable>
+                {/* <Text style={styles.price}>{price}</Text> */}
+                {/* <Pressable>
                     {buy === 'true' ? (
                         <View style={[styles.button, styles.primaryButton]}>
                             <Text style={[styles.buttonText, styles.primaryButtonText]}>Buy Now</Text>
                         </View>
                     ) : (
-                            <View style={[styles.button, styles.secondaryButton]}>  
+                            <View style={[styles.button, styles.secondaryButton]}>
                                 <Text style={[styles.buttonText, styles.secondaryButtonText]}>View</Text>
                             </View>
                     )}
-                </Pressable>
+                </Pressable> */}
             </View>
         </View>
     )
