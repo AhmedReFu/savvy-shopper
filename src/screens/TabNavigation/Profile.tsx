@@ -13,7 +13,7 @@ import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axios from "axios";
 import React, { useCallback, useState } from "react";
-import { Image, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, Linking, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthStackParamList } from "../../Navigation/types";
 import { Toast, useToast } from "../../components/useToost";
@@ -384,21 +384,21 @@ const Profile = () => {
                             {/* <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
                                 <Ionicons name="logo-whatsapp" size={20} color="green" />
                             </View> */}
-                            <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
+                            <Pressable onPress={() => Linking.openURL("https://www.tiktok.com/@dealnux")} className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
                                 <Ionicons name="logo-tiktok" size={20} color="black" />
-                            </View>
-                            <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
+                            </Pressable>
+                            {/* <Pressable onPress={() => Linking.canOpenURL("https://www.tiktok.com/@dealnux ")} className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
                                 <AntDesign name="x" size={18} color="black" />
-                            </View>
-                            <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
+                            </Pressable> */}
+                            <Pressable onPress={() => Linking.openURL("https://www.facebook.com/profile.php?id=61588412872195")} className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
                                 <Ionicons name="logo-facebook" size={20} color="blue" />
-                            </View>
-                            <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
+                            </Pressable>
+                            <Pressable onPress={() => Linking.openURL("https://www.youtube.com/channel/UC0_MpWGIwWlLQZOLrzgPIug")} className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
                                 <Ionicons name="logo-youtube" size={20} color="red" />
-                            </View>
-                            <View className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
+                            </Pressable>
+                            <Pressable onPress={() => Linking.openURL("https://www.instagram.com/dealnux/")} className="w-10 h-10 rounded-full bg-[#F3F4F6] items-center justify-center">
                                 <Ionicons name="logo-instagram" size={20} color="red" />
-                            </View>
+                            </Pressable>
                         </View>
 
                         <Divider />

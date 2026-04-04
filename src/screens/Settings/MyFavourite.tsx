@@ -241,11 +241,12 @@ const MyFavourite = () => {
     const ProductCard = ({ product }: { product: UiProduct }) => {
         const cardWidth = (width - 50) / 2 - 6;
         const isRemoving = removeLoadingIds.has(String(product.productId));
-
+        console.log(product.productId)
         return (
             <Pressable
                 onPress={() =>
                     navigation.navigate("ProductDetails", { productId: product.productId } as never)
+
                 }
                 style={[styles.productCard, { width: cardWidth }]}
             >

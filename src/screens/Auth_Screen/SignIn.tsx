@@ -238,8 +238,8 @@ const SignIn = () => {
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={styles.scrollContent}
                     >
-                        <Text style={styles.title}>Welcome to DEALNUX!</Text>
-                        <Text style={styles.subTitle}>Sign in to track prices and save money.</Text>
+                        <Text style={styles.title} className='text-center'>Welcome to DEALNUX!</Text>
+                        <Text style={styles.subTitle} className='text-center'>Sign in to track prices and save money.</Text>
 
                         <Text style={styles.label}>Email address</Text>
                         <View style={[styles.inputRow, styles.inputBorder]}>

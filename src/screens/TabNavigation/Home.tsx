@@ -5,6 +5,7 @@ import {
     CATEGORY_PRODUCT,
     IPA_BASE,
     PROFILE,
+    RECOMMENDED_PRODUCT,
     REMOVE_FAVORITE,
 } from '@env'
 import { EvilIcons, Ionicons, MaterialIcons } from '@expo/vector-icons'
@@ -197,6 +198,8 @@ const Home = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [pageSize] = useState(20)
     const [hasNextPage, setHasNextPage] = useState(true)
+    const [recommendedProducts, setRecommendedProducts] = useState<ApiProduct[]>([])
+
 
     // ── favorites: useRef + useState so toggleFavorite always reads latest ──
     // favSetRef  → always up-to-date (читается в toggleFavorite без stale closure)
@@ -338,6 +341,24 @@ const Home = () => {
         finally { setLoading(false) }
     }, [fetchProfile, fetchProducts, fetchCategories, hasLoadedOnce])
 
+    const fetchRecommended = useCallback(async (token: string) => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}${RECOMMENDED_PRODUCT}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+
+            const list: ApiProduct[] = Array.isArray(res?.data?.data?.results)
+                ? res.data.data.results
+                : Array.isArray(res?.data?.data)
+                    ? res.data.data
+                    : []
+            setRecommendedProducts(list)
+        } catch (e) {
+            console.error('recommended error', e)
+        }
+    }, [])
+    //amar recommended api hit kora lagbe kmn ami diteci "RECOMMENDED_PRODUCT" api call akahne hobe ar ayta api end point kmn
+
     useEffect(() => { loadInitialData() }, [loadInitialData])
 
     const handleCategoryPress = async (slug: string) => {
@@ -370,12 +391,16 @@ const Home = () => {
             await Promise.all([
                 fetchProfile(token),
                 fetchCategories(token),
+                fetchRecommended(token),
                 selectedCategory === 'all'
                     ? fetchProducts(token, 1, false)
                     : fetchProductsByCategory(token, selectedCategory, 1, false),
             ])
+
         } finally { setRefreshing(false) }
     }, [fetchProfile, fetchCategories, fetchProducts, fetchProductsByCategory, selectedCategory])
+    //
+
 
     // ── toggleFavorite: reads favRef.current — NEVER stale ───────────────────
     const toggleFavorite = useCallback(async (productId: number) => {
@@ -446,6 +471,7 @@ const Home = () => {
         <>
             <View style={styles.header}>
                 <View>
+                    <Text className='text-[#2355B6] text-xl   font-bold'>DealNux - Compare Faster Save Smarter</Text>
                     <Text style={styles.greeting}>{getGreeting()}</Text>
                     <Text style={styles.userName}>{user?.name || 'User'}</Text>
                 </View>
@@ -493,6 +519,48 @@ const Home = () => {
                 <Text style={styles.advertiseButtonText}>Advertise on DealNux</Text>
                 <MaterialIcons name="arrow-forward" size={20} color="white" />
             </TouchableOpacity>
+
+            {recommendedProducts.length > 0 && (
+                <View style={{ marginBottom: 20 }}>
+                    <Text style={styles.sectionTitle}>Recommended for You</Text>
+                    <FlatList
+                        horizontal
+                        data={recommendedProducts.map(toUi)}
+                        keyExtractor={item => `rec-${item.id}`}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+                        renderItem={({ item }) => (
+                            <ProductCard
+                                product={item}
+                                size="medium"
+                                isFavorite={isFav(item.id)}
+                                isLoading={isFavLoad(item.id)}
+                                onToggle={toggleFavorite}
+                                onPress={handleNavigateProduct}
+                            />
+                        )}
+                    />
+                </View>
+            )}
+            <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingHorizontal: 20,
+                marginBottom: 14,
+                marginTop: 4,
+            }}>
+                <Text style={{ fontSize: 20, fontWeight: '800', color: '#1F2937' }}>
+                    All Products
+                </Text>
+                {!productLoading && uiProducts.length > 0 && (
+                    <View style={{ backgroundColor: '#EFF6FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#2563EB' }}>
+                            {uiProducts.length} items
+                        </Text>
+                    </View>
+                )}
+            </View>
         </>
     )
 
@@ -508,6 +576,7 @@ const Home = () => {
 
     return (
         <SafeAreaView style={styles.container}>
+
             <FlatList
                 data={uiProducts}
                 keyExtractor={item => item.id}
@@ -548,6 +617,13 @@ export default Home
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F9F9FB' },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#1F2937',
+        paddingHorizontal: 20,
+        marginBottom: 12,
+    },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, marginBottom: 4 },
     greeting: { fontSize: 16, color: '#636F85', marginBottom: 4 },
     userName: { fontSize: 24, fontWeight: 'bold', color: '#1F2937' },

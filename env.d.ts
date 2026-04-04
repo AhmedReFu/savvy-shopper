@@ -36,4 +36,9 @@ declare module "@env" {
   export const SEARCH_PRODUCT: string;
   export const CATEGORY_PRODUCT: string;
   export const CATEGORIES_LIST: string;
+  export const ADD_CART: string;
+  export const CART_PRODUCT: string;
+  export const CART_REMOVE: string;
+  export const CART_UPDATE: string;
+  export const RECOMMENDED_PRODUCT: string;
 }
