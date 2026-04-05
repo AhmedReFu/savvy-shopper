@@ -32,11 +32,19 @@ import { AuthStackParamList } from '../../Navigation/types'
 import PremiumModal from '../../components/PremiumModal'
 import { Toast, useToast } from '../../components/useToost'
 import { Images } from '../../constants'
+import { HomeSkeleton } from '../../components/HomeSkeleton'
 
 const { width } = Dimensions.get('window')
 const API_BASE_URL = IPA_BASE
 
 type AuthNavProp = NativeStackNavigationProp<AuthStackParamList>
+
+// ─── Product source type ──────────────────────────────────────────────────────
+//
+//  'local'    → recommended products (id: 12, seller_shop field)
+//  'external' → all products (id: 44225, available_on[] field)
+//
+export type ProductSource = 'local' | 'external'
 
 type UserProfile = {
     name: string
@@ -69,6 +77,8 @@ type ApiProduct = {
     is_active?: boolean
     created_at?: string
     is_favorite?: boolean | string | null
+    // ← source tag — set manually before storing in state
+    source?: ProductSource
 }
 
 type UiProduct = {
@@ -80,6 +90,7 @@ type UiProduct = {
     discount: string
     image: string
     seller: string
+    source: ProductSource   // ← always present in UI layer
 }
 
 type CategoryItem = {
@@ -88,7 +99,8 @@ type CategoryItem = {
     slug: string
 }
 
-// ─── helpers (module level, no closure issues) ────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 const buildImageUrl = (path?: string | null): string => {
     if (!path) return 'https://via.placeholder.com/400x400/F1F5F9/94A3B8?text=No+Image'
     if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -124,23 +136,30 @@ const toUi = (item: ApiProduct): UiProduct => {
         discount,
         image: buildImageUrl(item.main_image),
         seller: item.available_on?.[0] || item.seller_shop || item.brand || 'Unknown',
+        source: item.source ?? 'external',   // ← default external
     }
 }
 
-// ─── ProductCard — module level so it never re-creates on Home re-render ─────
+// ─── ProductCard ──────────────────────────────────────────────────────────────
+
 type CardProps = {
     product: UiProduct
     size?: 'medium' | 'small'
     isFavorite: boolean
     isLoading: boolean
     onToggle: (id: number) => void
-    onPress: (id: number) => void
+    onPress: (id: number, source: ProductSource) => void   // ← source added
 }
 
-const ProductCard = React.memo(({ product, size = 'medium', isFavorite, isLoading, onToggle, onPress }: CardProps) => {
+const ProductCard = React.memo(({
+    product, size = 'medium', isFavorite, isLoading, onToggle, onPress
+}: CardProps) => {
     const cardWidth = size === 'medium' ? (width - 60) / 2 : (width - 50) / 2 - 8
     return (
-        <Pressable onPress={() => onPress(product.productId)} style={[styles.productCard, { width: cardWidth }]}>
+        <Pressable
+            onPress={() => onPress(product.productId, product.source)}   // ← source pass
+            style={[styles.productCard, { width: cardWidth }]}
+        >
             <View style={styles.imageContainer}>
                 <Image source={{ uri: product.image }} style={styles.productImage} resizeMode="cover" />
                 {!!product.discount && (
@@ -178,6 +197,7 @@ const ProductCard = React.memo(({ product, size = 'medium', isFavorite, isLoadin
 })
 
 // ─── Home ─────────────────────────────────────────────────────────────────────
+
 const Home = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>()
     const toast = useToast()
@@ -200,26 +220,15 @@ const Home = () => {
     const [hasNextPage, setHasNextPage] = useState(true)
     const [recommendedProducts, setRecommendedProducts] = useState<ApiProduct[]>([])
 
-
-    // ── favorites: useRef + useState so toggleFavorite always reads latest ──
-    // favSetRef  → always up-to-date (читается в toggleFavorite без stale closure)
-    // favState   → triggers re-render for UI
+    // ── favorites ──────────────────────────────────────────────────────────────
     const favRef = useRef<Set<string>>(new Set())
-    const [favVersion, setFavVersion] = useState(0) // bump to force re-render
-
+    const [favVersion, setFavVersion] = useState(0)
     const favLoadRef = useRef<Set<string>>(new Set())
     const [favLoadVersion, setFavLoadVersion] = useState(0)
 
-    const addFav = (id: string) => {
-        favRef.current.add(id)
-        setFavVersion(v => v + 1)
-    }
-    const removeFav = (id: string) => {
-        favRef.current.delete(id)
-        setFavVersion(v => v + 1)
-    }
+    const addFav = (id: string) => { favRef.current.add(id); setFavVersion(v => v + 1) }
+    const removeFav = (id: string) => { favRef.current.delete(id); setFavVersion(v => v + 1) }
     const isFav = (id: string) => favRef.current.has(id)
-
     const addFavLoad = (id: string) => { favLoadRef.current.add(id); setFavLoadVersion(v => v + 1) }
     const removeFavLoad = (id: string) => { favLoadRef.current.delete(id); setFavLoadVersion(v => v + 1) }
     const isFavLoad = (id: string) => favLoadRef.current.has(id)
@@ -233,15 +242,14 @@ const Home = () => {
         setFavVersion(v => v + 1)
     }
 
-    // ── derived UI list ──────────────────────────────────────────────────────
+    // ── derived ────────────────────────────────────────────────────────────────
     const uiProducts = useMemo(() => products.map(toUi), [products])
-
     const displayCategories = useMemo(
         () => [{ id: 0, name: 'All', slug: 'all' }, ...categories],
         [categories]
     )
 
-    // ── helpers ──────────────────────────────────────────────────────────────
+    // ── helpers ────────────────────────────────────────────────────────────────
     const getGreeting = () => {
         const h = new Date().getHours()
         if (h >= 6 && h < 12) return 'Good Morning,'
@@ -258,11 +266,14 @@ const Home = () => {
         else navigation.navigate('MyAds' as never)
     }
 
-    // ── API calls ─────────────────────────────────────────────────────────────
+    // ── API calls ──────────────────────────────────────────────────────────────
+
     const fetchProfile = useCallback(async (token: string) => {
         try {
             setProfileLoading(true)
-            const res = await axios.get(`${API_BASE_URL}${PROFILE}`, { headers: { Authorization: `Bearer ${token}` } })
+            const res = await axios.get(`${API_BASE_URL}${PROFILE}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             setUser(res?.data?.data ?? null)
         } catch (e) { console.error('profile error', e) }
         finally { setProfileLoading(false) }
@@ -271,7 +282,9 @@ const Home = () => {
     const fetchCategories = useCallback(async (token: string) => {
         try {
             setCategoryLoading(true)
-            const res = await axios.get(`${API_BASE_URL}${CATEGORIES_LIST}`, { headers: { Authorization: `Bearer ${token}` } })
+            const res = await axios.get(`${API_BASE_URL}${CATEGORIES_LIST}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
             const list = Array.isArray(res?.data?.data) ? res.data.data : []
             setCategories([...list].reverse())
         } catch (e) { console.error('category error', e); setCategories([]) }
@@ -285,12 +298,13 @@ const Home = () => {
                 headers: { Authorization: `Bearer ${token}` },
                 params: { page, page_size: pageSize },
             })
-            const list: ApiProduct[] = Array.isArray(res?.data?.data?.results) ? res.data.data.results : []
+            // ✅ source: 'external' — all products (Amazon, Wayfair etc)
+            const list: ApiProduct[] = (
+                Array.isArray(res?.data?.data?.results) ? res.data.data.results : []
+            ).map((item: ApiProduct) => ({ ...item, source: 'external' as ProductSource }))
+
             const pg = res?.data?.pagination ?? {}
-
-            // sync favs BEFORE setting products so first render is correct
             syncFavs(list, append)
-
             setProducts(prev => {
                 if (!append) return list
                 const merged = [...prev, ...list]
@@ -311,11 +325,13 @@ const Home = () => {
                 headers: { Authorization: `Bearer ${token}` },
                 params: { category: slug, page_size: 1000000 },
             })
-            const list: ApiProduct[] = Array.isArray(res?.data?.data?.results) ? res.data.data.results : []
+            // ✅ source: 'external' — category products also external
+            const list: ApiProduct[] = (
+                Array.isArray(res?.data?.data?.results) ? res.data.data.results : []
+            ).map((item: ApiProduct) => ({ ...item, source: 'external' as ProductSource }))
+
             const pg = res?.data?.pagination ?? {}
-
             syncFavs(list, append)
-
             setProducts(prev => {
                 if (!append) return list
                 const merged = [...prev, ...list]
@@ -329,35 +345,41 @@ const Home = () => {
         } finally { setProductLoading(false); setLoadingMore(false) }
     }, [])
 
+    const fetchRecommended = useCallback(async (token: string) => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}${RECOMMENDED_PRODUCT}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            const raw: ApiProduct[] = Array.isArray(res?.data?.data?.results)
+                ? res.data.data.results
+                : Array.isArray(res?.data?.data)
+                    ? res.data.data
+                    : []
+
+            // ✅ source: 'local' — recommended = local seller products (id: 12 type)
+            const list = raw.map(item => ({ ...item, source: 'local' as ProductSource }))
+            setRecommendedProducts(list)
+        } catch (e) {
+            console.error('recommended error', e)
+        }
+    }, [])
+
     const loadInitialData = useCallback(async () => {
         if (hasLoadedOnce) return
         setLoading(true)
         const token = await AsyncStorage.getItem('vToken')
         if (!token) { setLoading(false); return }
         try {
-            await Promise.all([fetchProfile(token), fetchProducts(token, 1, false), fetchCategories(token)])
+            await Promise.all([
+                fetchProfile(token),
+                fetchProducts(token, 1, false),
+                fetchCategories(token),
+                fetchRecommended(token),   // ← initial load এও fetch করো
+            ])
             setHasLoadedOnce(true)
         } catch (e) { console.error('initial load error', e) }
         finally { setLoading(false) }
-    }, [fetchProfile, fetchProducts, fetchCategories, hasLoadedOnce])
-
-    const fetchRecommended = useCallback(async (token: string) => {
-        try {
-            const res = await axios.get(`${API_BASE_URL}${RECOMMENDED_PRODUCT}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-
-            const list: ApiProduct[] = Array.isArray(res?.data?.data?.results)
-                ? res.data.data.results
-                : Array.isArray(res?.data?.data)
-                    ? res.data.data
-                    : []
-            setRecommendedProducts(list)
-        } catch (e) {
-            console.error('recommended error', e)
-        }
-    }, [])
-    //amar recommended api hit kora lagbe kmn ami diteci "RECOMMENDED_PRODUCT" api call akahne hobe ar ayta api end point kmn
+    }, [fetchProfile, fetchProducts, fetchCategories, fetchRecommended, hasLoadedOnce])
 
     useEffect(() => { loadInitialData() }, [loadInitialData])
 
@@ -396,30 +418,23 @@ const Home = () => {
                     ? fetchProducts(token, 1, false)
                     : fetchProductsByCategory(token, selectedCategory, 1, false),
             ])
-
         } finally { setRefreshing(false) }
-    }, [fetchProfile, fetchCategories, fetchProducts, fetchProductsByCategory, selectedCategory])
-    //
+    }, [fetchProfile, fetchCategories, fetchProducts, fetchProductsByCategory, fetchRecommended, selectedCategory])
 
+    // ── toggle favorite ────────────────────────────────────────────────────────
 
-    // ── toggleFavorite: reads favRef.current — NEVER stale ───────────────────
     const toggleFavorite = useCallback(async (productId: number) => {
         const token = await AsyncStorage.getItem('vToken')
         if (!token) { toast.show({ message: 'Token missing', type: 'error', style: 'top' }); return }
 
         const id = String(productId)
-        const currentlyFav = isFav(id) // reads ref — always latest
-
+        const currentlyFav = isFav(id)
         addFavLoad(id)
 
         try {
             if (currentlyFav) {
                 await axios.delete(`${API_BASE_URL}${REMOVE_FAVORITE}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', 'Content-Type': 'application/json' },
                     data: { product_id: productId },
                 })
                 removeFav(id)
@@ -436,43 +451,57 @@ const Home = () => {
                 toast.show({ message: 'Added to favorites', type: 'success', style: 'top' })
             }
         } catch (error: any) {
-            console.error('toggle fav error FULL:', JSON.stringify(error?.response?.data))
-            console.error('status:', error?.response?.status)
-            console.error('url:', error?.config?.url)
+            console.error('toggle fav error:', JSON.stringify(error?.response?.data))
         } finally {
             removeFavLoad(id)
         }
     }, [toast])
 
-    // ── render helpers ────────────────────────────────────────────────────────
-    const handleNavigateProduct = useCallback((id: number) => {
-        navigation.navigate('ProductDetails', { productId: id } as never)
+    // ── navigation ─────────────────────────────────────────────────────────────
+    //
+    //  ProductDetails screen এ source pass করো:
+    //  source='local'    → local seller API call করবে  (id: 12)
+    //  source='external' → all products API call করবে (id: 44225)
+    //
+
+    const handleNavigateProduct = useCallback((id: number, source: ProductSource) => {
+        navigation.navigate('ProductDetails', {
+            productId: id,
+            source,          // ← ProductDetails এ route.params.source দিয়ে নাও
+        } as never)
     }, [navigation])
+
+    // ── render helpers ─────────────────────────────────────────────────────────
 
     const renderItem = useCallback(({ item }: { item: UiProduct }) => (
         <ProductCard
             product={item}
             size="small"
-            isFavorite={isFav(item.id)}         // ref read — always latest
+            isFavorite={isFav(item.id)}
             isLoading={isFavLoad(item.id)}
             onToggle={toggleFavorite}
-            onPress={handleNavigateProduct}
+            onPress={handleNavigateProduct}   // ← (id, source) নেবে
         />
-        // favVersion / favLoadVersion as deps so FlatList re-renders when fav changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
     ), [toggleFavorite, handleNavigateProduct, favVersion, favLoadVersion])
 
     const renderFooter = () => {
         if (!loadingMore) return <View style={{ height: 30 }} />
-        return <View style={{ paddingVertical: 16, alignItems: 'center' }}><ActivityIndicator size="small" color="#2563EB" /></View>
+        return (
+            <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color="#2563EB" />
+            </View>
+        )
     }
 
     const renderHeader = () => (
         <>
+            {/* Header */}
             <View style={styles.header}>
                 <View>
-                    <Text className='text-[#2355B6] text-xl   font-bold'>DealNux - Compare Faster Save Smarter</Text>
-                    <Text style={styles.greeting}>{getGreeting()}</Text>
+                    <Text className='text-[#2355B6] text-lg font-bold'>
+                        DealNux - Compare Faster Save Smarter
+                    </Text>
                     <Text style={styles.userName}>{user?.name || 'User'}</Text>
                 </View>
                 <Pressable onPress={() => navigation.navigate('Notification' as never)}>
@@ -480,11 +509,13 @@ const Home = () => {
                 </Pressable>
             </View>
 
+            {/* Search */}
             <Pressable style={styles.searchContainer} onPress={() => navigation.navigate('SearchProduct' as never)}>
                 <EvilIcons name="search" size={40} color="#94A3B8" />
                 <Text style={styles.searchInput}>Search products, brands....</Text>
             </Pressable>
 
+            {/* Categories */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryContainer}>
                 {displayCategories.map(cat => {
                     const active = selectedCategory === cat.slug
@@ -494,13 +525,21 @@ const Home = () => {
                             style={[styles.categoryButton, active && styles.categoryButtonActive]}
                             onPress={() => handleCategoryPress(cat.slug)}
                         >
-                            <Text style={[styles.categoryText, active && styles.categoryTextActive]}>{cat.name}</Text>
+                            <Text style={[styles.categoryText, active && styles.categoryTextActive]}>
+                                {cat.name}
+                            </Text>
                         </TouchableOpacity>
                     )
                 })}
             </ScrollView>
 
-            <LinearGradient colors={['#0057FF', '#61B3FF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.premiumCard}>
+            {/* Premium Card */}
+            <LinearGradient
+                colors={['#0057FF', '#61B3FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.premiumCard}
+            >
                 <Image source={Images.AngleIcon} style={styles.angleIcon} resizeMode="contain" />
                 <Image source={Images.MoneyStraw} style={styles.moneyStraw} resizeMode="contain" />
                 <View style={styles.premiumIcon}>
@@ -508,18 +547,16 @@ const Home = () => {
                     <Text style={styles.premiumTitle}>DEALNUX PREMIUM</Text>
                 </View>
                 <Text style={styles.premiumSubtitle}>Unlock smarter savings and{'\n'}auto-coupons!</Text>
-                <Text style={styles.premiumDescription}>Experience ad-free browsing and exclusive{'\n'}price drop alerts.</Text>
+                <Text style={styles.premiumDescription}>
+                    Experience ad-free browsing and exclusive{'\n'}price drop alerts.
+                </Text>
                 <TouchableOpacity style={styles.premiumButton} onPress={() => setPremiumModalVisible(true)}>
                     <Text style={styles.premiumButtonText}>Start Free Trial</Text>
                     <MaterialIcons name="arrow-forward" size={18} color="#0057FF" />
                 </TouchableOpacity>
             </LinearGradient>
 
-            <TouchableOpacity style={styles.advertiseButton} onPress={myAds}>
-                <Text style={styles.advertiseButtonText}>Advertise on DealNux</Text>
-                <MaterialIcons name="arrow-forward" size={20} color="white" />
-            </TouchableOpacity>
-
+            {/* Recommended Section */}
             {recommendedProducts.length > 0 && (
                 <View style={{ marginBottom: 20 }}>
                     <Text style={styles.sectionTitle}>Recommended for You</Text>
@@ -536,12 +573,14 @@ const Home = () => {
                                 isFavorite={isFav(item.id)}
                                 isLoading={isFavLoad(item.id)}
                                 onToggle={toggleFavorite}
-                                onPress={handleNavigateProduct}
+                                onPress={handleNavigateProduct}   // ← source='local' pass হবে
                             />
                         )}
                     />
                 </View>
             )}
+
+            {/* All Products Title */}
             <View style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
@@ -554,7 +593,12 @@ const Home = () => {
                     All Products
                 </Text>
                 {!productLoading && uiProducts.length > 0 && (
-                    <View style={{ backgroundColor: '#EFF6FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 }}>
+                    <View style={{
+                        backgroundColor: '#EFF6FF',
+                        borderRadius: 10,
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                    }}>
                         <Text style={{ fontSize: 12, fontWeight: '700', color: '#2563EB' }}>
                             {uiProducts.length} items
                         </Text>
@@ -567,16 +611,13 @@ const Home = () => {
     if (loading && products.length === 0) {
         return (
             <SafeAreaView style={styles.container}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#2563EB" />
-                </View>
+                <HomeSkeleton />
             </SafeAreaView>
         )
     }
 
     return (
         <SafeAreaView style={styles.container}>
-
             <FlatList
                 data={uiProducts}
                 keyExtractor={item => item.id}
@@ -593,7 +634,9 @@ const Home = () => {
                 contentContainerStyle={{ paddingBottom: 40 }}
                 ListEmptyComponent={
                     !productLoading
-                        ? <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 20 }}>No products found</Text>
+                        ? <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 20 }}>
+                            No products found
+                        </Text>
                         : null
                 }
             />
@@ -615,6 +658,8 @@ const Home = () => {
 
 export default Home
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F9F9FB' },
     sectionTitle: {
@@ -624,34 +669,133 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         marginBottom: 12,
     },
-    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, marginBottom: 4 },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        marginBottom: 4,
+    },
     greeting: { fontSize: 16, color: '#636F85', marginBottom: 4 },
     userName: { fontSize: 24, fontWeight: 'bold', color: '#1F2937' },
-    searchContainer: { borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#FFFFFF', borderRadius: 16, flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 12, marginHorizontal: 20, marginBottom: 20, alignItems: 'center' },
+    searchContainer: {
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        flexDirection: 'row',
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        marginHorizontal: 20,
+        marginBottom: 8,
+        alignItems: 'center',
+    },
     searchInput: { flex: 1, fontSize: 16, color: '#636F85', paddingHorizontal: 8 },
-    categoryContainer: { paddingHorizontal: 20, marginBottom: 20, marginRight: 16 },
-    categoryButton: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginRight: 16, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#D1D6DB' },
+    categoryContainer: { paddingHorizontal: 20, marginBottom: 8, marginRight: 16 },
+    categoryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 20,
+        marginRight: 18,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#D1D6DB',
+    },
     categoryButtonActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
     categoryText: { fontSize: 14, color: '#64748B', fontWeight: '500' },
     categoryTextActive: { color: 'white' },
-    premiumCard: { marginHorizontal: 20, borderRadius: 20, padding: 24, marginBottom: 16, position: 'relative', overflow: 'hidden' },
+    premiumCard: {
+        marginHorizontal: 20,
+        borderRadius: 20,
+        padding: 24,
+        marginBottom: 16,
+        position: 'relative',
+        overflow: 'hidden',
+    },
     angleIcon: { position: 'absolute', top: -100, right: -40 },
     moneyStraw: { position: 'absolute', right: 20, bottom: 16, width: 115, height: 115 },
-    premiumIcon: { flexDirection: 'row', justifyContent: 'flex-start', gap: 20, alignItems: 'center', marginBottom: 12 },
-    premiumIconText: { padding: 12, borderRadius: 28, backgroundColor: 'rgba(255,255,255,0.2)', fontSize: 20 },
+    premiumIcon: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        gap: 20,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    premiumIconText: {
+        padding: 12,
+        borderRadius: 28,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        fontSize: 20,
+    },
     premiumTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
     premiumSubtitle: { color: 'white', fontSize: 20, fontWeight: '600', marginBottom: 8, lineHeight: 28 },
     premiumDescription: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginBottom: 16, lineHeight: 20 },
-    premiumButton: { backgroundColor: 'white', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, alignSelf: 'flex-start', gap: 6 },
+    premiumButton: {
+        backgroundColor: 'white',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        alignSelf: 'flex-start',
+        gap: 6,
+    },
     premiumButtonText: { color: '#0057FF', fontWeight: '600', fontSize: 16 },
-    advertiseButton: { backgroundColor: '#1E40AF', marginHorizontal: 20, borderRadius: 12, padding: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 24, gap: 8 },
+    advertiseButton: {
+        backgroundColor: '#1E40AF',
+        marginHorizontal: 20,
+        borderRadius: 12,
+        padding: 16,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
+        gap: 8,
+    },
     advertiseButtonText: { color: 'white', fontSize: 16, fontWeight: '600' },
-    productCard: { backgroundColor: '#FFFFFF', borderRadius: 16, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4, marginBottom: 20 },
+    productCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
+        marginBottom: 20,
+    },
     imageContainer: { position: 'relative', height: 160, backgroundColor: '#E2E8F0' },
     productImage: { width: '100%', height: '100%' },
-    discountBadge: { position: 'absolute', top: 12, left: 12, backgroundColor: '#FCD34D', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+    discountBadge: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        backgroundColor: '#FCD34D',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
     discountText: { color: '#000', fontWeight: 'bold', fontSize: 12 },
-    favoriteButton: { position: 'absolute', top: 12, right: 12, backgroundColor: 'white', width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+    favoriteButton: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        backgroundColor: 'white',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
     productInfo: { padding: 12, backgroundColor: '#FFFFFF' },
     productName: { fontSize: 15, fontWeight: '600', color: '#1F2937', marginBottom: 6 },
     priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },

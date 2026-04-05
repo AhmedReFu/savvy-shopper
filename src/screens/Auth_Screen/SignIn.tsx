@@ -371,12 +371,12 @@ const styles = StyleSheet.create({
     },
 
     title: {
-        fontSize: 30,
+        fontSize: 24,
         fontWeight: '800',
         color: '#111827',
     },
     subTitle: {
-        fontSize: 18,
+        fontSize: 16,
         color: '#636F85',
         marginVertical: 16,
     },
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     },
     textInput: {
         flex: 1,
-        fontSize: 18,
+        fontSize: 16,
         // ✅ iOS TextInput baseline/height fix
         paddingVertical: Platform.OS === 'ios' ? 0 : 2,
         color: '#111827',
