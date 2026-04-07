@@ -41,4 +41,5 @@ declare module "@env" {
   export const CART_REMOVE: string;
   export const CART_UPDATE: string;
   export const RECOMMENDED_PRODUCT: string;
+  export const COMPARE_PRODUCT: string;
 }
