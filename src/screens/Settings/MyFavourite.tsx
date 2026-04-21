@@ -309,14 +309,9 @@ const MyFavourite = () => {
         );
     };
 
-    const renderHeader = () => (
-        <View style={{ paddingHorizontal: 20 }}>
-            <View style={styles.headerRow}>
-                <AppHeader left={() => <BackButton />} />
-                <Text style={styles.headerTitle}>My Favourite</Text>
-            </View>
-        </View>
-    );
+    // const renderHeader = () => (
+
+    // );
 
     const renderEmpty = () => {
         if (loading) return null;
@@ -344,13 +339,19 @@ const MyFavourite = () => {
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: "#F9F9FB" }}>
+            <View style={{ paddingHorizontal: 20 }}>
+                <View style={styles.headerRow}>
+                    <AppHeader left={() => <BackButton />} />
+                    <Text style={styles.headerTitle}>My Favourite</Text>
+                </View>
+            </View>
             <FlatList
                 data={favouriteProducts}
                 keyExtractor={(item) => item.id}
                 numColumns={2}
                 renderItem={({ item }) => <ProductCard product={item} />}
                 columnWrapperStyle={styles.recommendedGrid}
-                ListHeaderComponent={renderHeader}
+                // ListHeaderComponent={renderHeader}
                 ListEmptyComponent={renderEmpty}
                 onRefresh={() => loadFavorites(true)}
                 refreshing={refreshing}
@@ -378,7 +379,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         gap: 12,
-        marginBottom: 16,
     },
     headerTitle: {
         fontSize: 20,

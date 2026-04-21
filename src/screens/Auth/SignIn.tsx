@@ -51,7 +51,6 @@ const SignIn = () => {
                 if (savedRememberMe !== null) {
                     const rememberMeValue = JSON.parse(savedRememberMe);
                     setRememberMe(rememberMeValue);
-
                     if (rememberMeValue) {
                         const savedEmail = await AsyncStorage.getItem('rememberedEmail');
                         if (savedEmail) setEmail(savedEmail);
@@ -61,16 +60,13 @@ const SignIn = () => {
                 console.error('Error loading remembered data:', error);
             }
         };
-
         loadRememberedData();
     }, []);
 
     const handleRememberMeChange = async (value: boolean) => {
         setRememberMe(value);
-
         try {
             await AsyncStorage.setItem('rememberMe', JSON.stringify(value));
-
             if (value && email.trim()) {
                 await AsyncStorage.setItem('rememberedEmail', email.trim().toLowerCase());
             } else if (!value) {
@@ -93,7 +89,6 @@ const SignIn = () => {
                     console.error('Error loading remembered email:', error);
                 }
             };
-
             loadRememberedEmail();
         }, [rememberMe]),
     );
@@ -121,39 +116,32 @@ const SignIn = () => {
                 Alert.alert('Apple Sign-In', 'Apple Sign-In is available on iOS only.');
                 return;
             }
-
             const available = await AppleAuthentication.isAvailableAsync();
             if (!available) {
                 Alert.alert('Apple Sign-In', 'Apple Sign-In is not available on this device.');
                 return;
             }
-
             const credential = await AppleAuthentication.signInAsync({
                 requestedScopes: [
                     AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
                     AppleAuthentication.AppleAuthenticationScope.EMAIL,
                 ],
             });
-
             const identityToken = credential.identityToken;
             if (!identityToken) {
                 Alert.alert('Apple Sign-In', 'identityToken not found. Please try again.');
                 return;
             }
-
             const res = await fetch('https://agen-backend-office.vercel.app/api/v1/auth/appleLogin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ identityToken }),
             });
-
             const data = await res.json();
-
             if (!res.ok) {
                 Alert.alert('Login Failed', data?.message || 'Apple login failed');
                 return;
             }
-
             navigation.navigate('MainTabs');
         } catch (e: any) {
             if (e?.code === 'ERR_REQUEST_CANCELED') return;
@@ -166,28 +154,18 @@ const SignIn = () => {
             Alert.alert('Missing info', 'Please enter email and password.');
             return;
         }
-
         try {
             setLoading(true);
-
             const res = await axios.post(
                 `${API_BASE_URL}${END_POINTS}`,
-                {
-                    email: email.trim().toLowerCase(),
-                    password,
-                },
-                {
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 15000,
-                },
+                { email: email.trim().toLowerCase(), password },
+                { headers: { 'Content-Type': 'application/json' }, timeout: 15000 },
             );
-
             const data = res.data;
-            console.log(data.data.access)
             if (data?.success === true) {
-                await AsyncStorage.setItem("vToken", data.data.access)
+                await AsyncStorage.setItem('vToken', data.data.access);
                 if (rememberMe) {
-                    await AsyncStorage.setItem('rememberedEmail', email.trim().toLowerCase()); 
+                    await AsyncStorage.setItem('rememberedEmail', email.trim().toLowerCase());
                 }
                 setShowSuccessModal(true);
                 setTimeout(() => {
@@ -199,21 +177,17 @@ const SignIn = () => {
             }
         } catch (e: any) {
             const msg = e?.response?.data?.message || e?.message || 'Something went wrong';
-            console.log(msg)
-            if (msg == "Profile setup not completed. Please complete your profile first!") {
+            if (msg === 'Profile setup not completed. Please complete your profile first!') {
                 setTimeout(() => {
                     setShowSuccessModal(false);
                     navigation.navigate('ProfileSetup', { email: email.trim().toLowerCase() } as any);
                 }, 1500);
             }
-            if (msg == "Account not activated. Please verify OTP first!") {
+            if (msg === 'Account not activated. Please verify OTP first!') {
                 setTimeout(() => {
                     setShowSuccessModal(false);
-                    navigation.navigate('OtpAuth', {
-                        email: email.trim().toLowerCase(),
-                    } as any);
+                    navigation.navigate('OtpAuth', { email: email.trim().toLowerCase() } as any);
                 }, 1500);
-
             }
             Alert.alert('Sign in failed', msg);
         } finally {
@@ -222,24 +196,28 @@ const SignIn = () => {
     };
 
     return (
-        <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+        // ✅ FIX 1: Added 'bottom' to edges so SafeAreaView covers nav bar area
+        <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safe}>
+            {/* ✅ FIX 2: behavior='height' works on Android; 'padding' on iOS */}
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
                 <View style={styles.page}>
                     <View style={styles.logoContainer}>
                         <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
                     </View>
 
+                    {/* ✅ FIX 3: ScrollView handles overflow when keyboard pushes content */}
                     <ScrollView
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={styles.scrollContent}
+                        bounces={false}
                     >
-                        <Text style={styles.title} className='text-center'>Welcome to DEALNUX!</Text>
-                        <Text style={styles.subTitle} className='text-center'>Sign in to track prices and save money.</Text>
+                        <Text style={[styles.title, { textAlign: 'center' }]}>Welcome to DEALNUX!</Text>
+                        <Text style={[styles.subTitle, { textAlign: 'center' }]}>Sign in to track prices and save money.</Text>
 
                         <Text style={styles.label}>Email address</Text>
                         <View style={[styles.inputRow, styles.inputBorder]}>
@@ -310,18 +288,11 @@ const SignIn = () => {
                             <View style={styles.divider} />
                         </View>
 
-                        <View className='flex-row justify-center gap-4'>
-                            <TouchableOpacity
-                                className='bg-white border border-gray-200 rounded-2xl px-6 py-4 flex-row items-center justify-center flex-1'
-                                activeOpacity={0.8}
-                            >
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
                                 <GoogleButtonSvg />
-
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                className='bg-white border border-gray-200 rounded-2xl px-6 py-4 flex-row items-center justify-center flex-1'
-                                activeOpacity={0.8}
-                            >
+                            <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
                                 <AppleButtonSvg />
                             </TouchableOpacity>
                         </View>
@@ -334,14 +305,14 @@ const SignIn = () => {
                         </View>
                     </ScrollView>
                 </View>
-
-                <SuccessModal
-                    visible={showSuccessModal}
-                    title="Successful!"
-                    description="You have signed in successfully."
-                    onClose={() => setShowSuccessModal(false)}
-                />
             </KeyboardAvoidingView>
+
+            <SuccessModal
+                visible={showSuccessModal}
+                title="Successful!"
+                description="You have signed in successfully."
+                onClose={() => setShowSuccessModal(false)}
+            />
         </SafeAreaView>
     );
 };
@@ -357,19 +328,19 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 20,
     },
+    // ✅ FIX 4: Enough bottom padding so last item clears keyboard
     scrollContent: {
-        paddingBottom: 40, // ✅ iOS bottom overlap fix
+        paddingBottom: 40,
+        flexGrow: 1,
     },
-
     logoContainer: {
         alignItems: 'center',
         paddingTop: height * 0.02,
     },
     logoImage: {
         width: width * 0.6,
-        height: height * 0.2,
+        height: height * 0.15, // ✅ slightly smaller so more form is visible
     },
-
     title: {
         fontSize: 24,
         fontWeight: '800',
@@ -380,7 +351,6 @@ const styles = StyleSheet.create({
         color: '#636F85',
         marginVertical: 16,
     },
-
     label: {
         fontSize: 16,
         fontWeight: '600',
@@ -388,12 +358,11 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 16,
     },
-
     inputRow: {
         backgroundColor: '#F5F5F5',
         borderRadius: 12,
         paddingHorizontal: 16,
-        paddingVertical: Platform.OS === 'ios' ? 14 : 10, // ✅ iOS fix
+        paddingVertical: Platform.OS === 'ios' ? 14 : 12,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -407,11 +376,9 @@ const styles = StyleSheet.create({
     textInput: {
         flex: 1,
         fontSize: 16,
-        // ✅ iOS TextInput baseline/height fix
         paddingVertical: Platform.OS === 'ios' ? 0 : 2,
         color: '#111827',
     },
-
     optionsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -431,7 +398,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#E74C3C',
     },
-
     mainButton: {
         backgroundColor: '#2355B6',
         borderRadius: 12,
@@ -443,7 +409,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FFFFFF',
     },
-
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -459,7 +424,6 @@ const styles = StyleSheet.create({
         color: '#666666',
         marginHorizontal: 16,
     },
-
     checkboxSquare: {
         width: 22,
         height: 22,
@@ -479,23 +443,29 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
     },
-
     socialRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 8,
+        justifyContent: 'center',
+        gap: 16,
     },
     socialBtn: {
-        height: 64,
-        width: (width - 40 - 12) / 2, // 2 buttons with gap
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 16,
+        paddingHorizontal: 24,
+        paddingVertical: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-
     signupRow: {
         flexDirection: 'row',
         justifyContent: 'center',
         flexWrap: 'wrap',
         marginTop: 20,
-        marginBottom: 30,
+        marginBottom: 16,
     },
     signupText: {
         fontSize: 18,

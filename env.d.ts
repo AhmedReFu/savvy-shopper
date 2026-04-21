@@ -42,4 +42,11 @@ declare module "@env" {
   export const CART_UPDATE: string;
   export const RECOMMENDED_PRODUCT: string;
   export const COMPARE_PRODUCT: string;
+  export const TOTAL_SUMMERY_POST: string;
+  export const DASHBOARD_API: string;
+  export const VIEW_ADS: string;
+  export const CLICK_ADS: string;
+  export const GET_PRODUCT: string;
+  export const UPDATE_PRODUCT: string;
+  export const DELETE_PRODUCT: string;
 }

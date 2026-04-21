@@ -1,16 +1,19 @@
 import {
-    ADD_PRODUCT,
     CATEGORIES_LIST,
+    DELETE_PRODUCT,
+    GET_PRODUCT,
     IPA_BASE,
+    UPDATE_PRODUCT,
 } from '@env';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import axios from 'axios';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useEffect, useState } from 'react';
 import {
+    Alert,
     Image,
     KeyboardAvoidingView,
     Modal,
@@ -29,6 +32,10 @@ import BackButton from '../../components/BackButton';
 import SuccessModal from '../../components/SuccessModal';
 import { Toast, useToast } from '../../components/useToost';
 import { AuthStackParamList } from '../../Navigation/types';
+
+type RouteParams = {
+    productId: string | number;
+};
 
 type CategoryItem = {
     id: string | number;
@@ -55,9 +62,6 @@ type BoxInputProps = {
 };
 
 const API_BASE_URL = IPA_BASE;
-const ADD_PRODUCT_URL = `${API_BASE_URL}${ADD_PRODUCT}`;
-const CATEGORY_LIST_URL = `${API_BASE_URL}${CATEGORIES_LIST}`;
-
 const conditionOptions = ['NEW', 'USED', 'REFURBISHED', 'OPEN_BOX'] as const;
 type ConditionType = (typeof conditionOptions)[number];
 
@@ -113,6 +117,19 @@ const SelectBox = ({
     </Pressable>
 );
 
+const SkeletonBox = ({
+    height = 56,
+    className = '',
+}: {
+    height?: number;
+    className?: string;
+}) => (
+    <View
+        className={`bg-[#E5E7EB] rounded-xl ${className}`}
+        style={{ height }}
+    />
+);
+
 const getExtFromUri = (uri: string) => {
     const clean = uri.split('?')[0];
     const parts = clean.split('.');
@@ -126,14 +143,21 @@ const mimeFromExt = (ext: string) => {
     return 'image/jpeg';
 };
 
-const AddProduct = () => {
+const EditProduct = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
+    const route = useRoute();
     const toast = useToast();
+
+    const { productId } = route.params as RouteParams;
+
+    const [fetching, setFetching] = useState(true);
+    const [fetchError, setFetchError] = useState('');
+    const [productLoaded, setProductLoaded] = useState(false);
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
-    // category name backend e jabe
     const [category, setCategory] = useState('');
     const [categoryName, setCategoryName] = useState('');
     const [categories, setCategories] = useState<CategoryItem[]>([]);
@@ -150,13 +174,19 @@ const AddProduct = () => {
     const [quantity, setQuantity] = useState('');
     const [condition, setCondition] = useState<ConditionType>('OPEN_BOX');
     const [freeShipping, setFreeShipping] = useState(true);
-    const [shippingCost, setShippingCost] = useState('0');
+    const [shippingCost, setShippingCost] = useState('');
     const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState('');
     const [returnsAccepted, setReturnsAccepted] = useState(true);
     const [returnPeriodDays, setReturnPeriodDays] = useState('');
-    const [conditionModalOpen, setConditionModalOpen] = useState(false);
 
     const [imageFile, setImageFile] = useState<PickedImage | null>(null);
+    const [existingImageUrl, setExistingImageUrl] = useState('');
+    const [conditionModalOpen, setConditionModalOpen] = useState(false);
+
+    const productDetailsUrl = `${API_BASE_URL}${GET_PRODUCT}${productId}/`;
+    const updateProductUrl = `${API_BASE_URL}${UPDATE_PRODUCT}${productId}/`;
+    const deleteProductUrl = `${API_BASE_URL}${DELETE_PRODUCT}${productId}/`;
+    const categoryListUrl = `${API_BASE_URL}${CATEGORIES_LIST}`;
 
     const fetchCategories = async () => {
         const token = await AsyncStorage.getItem('vToken');
@@ -165,7 +195,7 @@ const AddProduct = () => {
         try {
             setCategoryLoading(true);
 
-            const res = await axios.get(CATEGORY_LIST_URL, {
+            const res = await axios.get(categoryListUrl, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/json',
@@ -173,7 +203,6 @@ const AddProduct = () => {
             });
 
             const rawData = res?.data?.data || [];
-
             const mappedCategories: CategoryItem[] = Array.isArray(rawData)
                 ? rawData.map((item: any) => ({
                     id: item?.id,
@@ -185,89 +214,114 @@ const AddProduct = () => {
             setCategories(mappedCategories);
         } catch (error: any) {
             console.log('CATEGORY FETCH ERROR =>', error?.response?.data || error);
-            toast.show({
-                message: 'Failed to load categories',
-                type: 'error',
-                style: 'top',
-            });
         } finally {
             setCategoryLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
+    const fetchProductDetails = async () => {
+        const token = await AsyncStorage.getItem('vToken');
 
-    const pickImage = async () => {
+        if (!token) {
+            setFetchError('Token missing');
+            setFetching(false);
+            setProductLoaded(false);
+            return;
+        }
+
         try {
-            const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            setFetching(true);
+            setFetchError('');
+            setProductLoaded(false);
 
-            if (!permission.granted) {
-                toast.show({
-                    message: 'Gallery permission denied',
-                    type: 'error',
-                    style: 'top',
-                });
+            const res = await axios.get(productDetailsUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                },
+            });
+
+            const product = res?.data?.data;
+
+            if (!product) {
+                setFetchError('Product data not found');
+                setProductLoaded(false);
                 return;
             }
 
+            setCategory(product?.category_name ?? '');
+            setCategoryName(product?.category_name ?? '');
+            setTitle(product?.title ?? '');
+            setDescription(product?.description ?? '');
+            setBrand(product?.brand ?? '');
+            setModelNumber(product?.model_number ?? '');
+            setPrice(String(product?.price ?? ''));
+            setOriginalPrice(String(product?.original_price ?? ''));
+            setCurrency((product?.currency ?? 'usd').toLowerCase());
+            setQuantity(String(product?.quantity ?? ''));
+            setCondition((product?.condition as ConditionType) || 'OPEN_BOX');
+            setExistingImageUrl(product?.main_image ?? '');
+            setFreeShipping(!!product?.free_shipping);
+            setShippingCost(String(product?.shipping_cost ?? '0'));
+            setEstimatedDeliveryDays(String(product?.estimated_delivery_days ?? ''));
+            setReturnsAccepted(!!product?.returns_accepted);
+            setReturnPeriodDays(String(product?.return_period_days ?? ''));
+
+            setProductLoaded(true);
+        } catch (error: any) {
+            console.log('GET PRODUCT ERROR =>', error);
+            console.log('GET PRODUCT RESPONSE DATA =>', error?.response?.data);
+            setFetchError(error?.response?.data?.message || 'Failed to fetch product');
+            setProductLoaded(false);
+        } finally {
+            setFetching(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProductDetails();
+        fetchCategories();
+    }, [productId]);
+
+    const pickImage = async () => {
+        try {
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 quality: 1,
-                allowsEditing: false,
-                legacy: true,
             });
 
             if (result.canceled) return;
 
-            const asset = result.assets?.[0];
-            if (!asset?.uri) return;
+            const asset = result.assets[0];
 
             let uri = asset.uri;
 
-            let ext =
-                (asset.fileName && asset.fileName.includes('.')
-                    ? asset.fileName.split('.').pop()?.toLowerCase()
-                    : undefined) || getExtFromUri(uri);
-
-            ext = ext || 'jpg';
-
-            let mime = (asset as any).mimeType || mimeFromExt(ext);
-
-            if (mime === 'image/heic' || ext === 'heic' || ext === 'heif') {
-                const manipulated = await ImageManipulator.manipulateAsync(uri, [], {
-                    compress: 1,
+            // 🔥 ALWAYS CONVERT TO JPG (important)
+            const manipulated = await ImageManipulator.manipulateAsync(
+                uri,
+                [],
+                {
+                    compress: 0.8,
                     format: ImageManipulator.SaveFormat.JPEG,
-                });
+                }
+            );
 
-                uri = manipulated.uri;
-                ext = 'jpg';
-                mime = 'image/jpeg';
-            }
-
-            const fileName =
-                asset.fileName && asset.fileName.includes('.')
-                    ? asset.fileName.replace(/\.(heic|heif)$/i, '.jpg')
-                    : `product_${Date.now()}.${ext}`;
+            const finalUri = manipulated.uri;
 
             setImageFile({
-                uri,
-                name: fileName,
-                type: mime || 'image/jpeg',
-                width: asset.width,
-                height: asset.height,
+                uri: finalUri,
+                name: `product_${Date.now()}.jpg`,
+                type: 'image/jpeg',
             });
-        } catch (error) {
-            toast.show({
-                message: 'Image pick failed',
-                type: 'error',
-                style: 'top',
-            });
+
+            console.log('FINAL IMAGE =>', finalUri);
+
+        } catch (err) {
+            console.log('IMAGE ERROR', err);
         }
     };
 
-    const handleAddProduct = async () => {
+    const handleUpdateProduct = async () => {
         const token = await AsyncStorage.getItem('vToken');
 
         if (!token) {
@@ -354,15 +408,6 @@ const AddProduct = () => {
         if (!quantity.trim()) {
             toast.show({
                 message: 'Please enter quantity.',
-                type: 'error',
-                style: 'top',
-            });
-            return;
-        }
-
-        if (!imageFile) {
-            toast.show({
-                message: 'Please select product image.',
                 type: 'error',
                 style: 'top',
             });
@@ -462,7 +507,7 @@ const AddProduct = () => {
 
             const formData = new FormData();
 
-            // backend e category name jabe
+            formData.append('_method', 'PATCH');
             formData.append('category', category.trim());
             formData.append('title', title.trim());
             formData.append('description', description.trim());
@@ -482,45 +527,122 @@ const AddProduct = () => {
                 returnsAccepted ? String(returnDaysNum) : '0'
             );
 
-            formData.append('main_image', {
-                uri: imageFile.uri,
-                name: imageFile.name || `product_${Date.now()}.jpg`,
-                type: imageFile.type || 'image/jpeg',
-            } as any);
+            
 
-            console.log('ADD PRODUCT URL =>', ADD_PRODUCT_URL);
-            console.log('category sending =>', category);
+            if (imageFile) {
+                formData.append('main_image', {
+                    uri: imageFile.uri,
+                    name: imageFile.name,
+                    type: imageFile.type,
+                } as any);
+            }
 
-            const res = await axios.post(ADD_PRODUCT_URL, formData, {
+            console.log('UPDATE URL =>', updateProductUrl);
+            console.log('UPDATE CATEGORY =>', category);
+            console.log('UPDATE IMAGE =>', imageFile);
+            console.log('UPDATE IMAGE MIME =>', imageFile?.type);
+            console.log('UPDATE IMAGE NAME =>', imageFile?.name);
+            console.log('UPDATE IMAGE URI =>', imageFile?.uri);
+
+            const res = await axios.patch(updateProductUrl, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/json',
+                    'Content-Type': 'multipart/form-data',
                 },
+                timeout: 30000,
             });
 
-            if (res?.data?.success === true || res?.data?.code === 200 || res?.data?.code === 201) {
+            console.log('UPDATE SUCCESS =>', res?.data);
+
+            if (res?.data?.success === true || res?.data?.code === 200) {
                 setShowSuccessModal(true);
             } else {
                 toast.show({
-                    message: res?.data?.message || 'Product add failed',
+                    message: res?.data?.message || 'Product update failed',
                     type: 'error',
                     style: 'top',
                 });
             }
         } catch (error: any) {
-            console.log('ADD PRODUCT FULL ERROR =>', error);
-            console.log('ADD PRODUCT RESPONSE =>', error?.response);
-            console.log('ADD PRODUCT RESPONSE DATA =>', error?.response?.data);
-            console.log('ADD PRODUCT MESSAGE =>', error?.message);
+            console.log('UPDATE FULL ERROR =>', error);
+            console.log('UPDATE RESPONSE =>', error?.response);
+            console.log('UPDATE RESPONSE DATA =>', error?.response?.data);
+            console.log('UPDATE MESSAGE =>', error?.message);
 
             toast.show({
-                message: error?.response?.data?.message || error?.message || 'Product add failed',
+                message:
+                    error?.response?.data?.message ||
+                    error?.message ||
+                    'Product update failed',
                 type: 'error',
                 style: 'top',
             });
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDeleteProduct = async () => {
+        const token = await AsyncStorage.getItem('vToken');
+
+        if (!token) {
+            toast.show({
+                message: 'Token missing',
+                type: 'error',
+                style: 'top',
+            });
+            return;
+        }
+
+        try {
+            setDeleteLoading(true);
+
+            const res = await axios.delete(deleteProductUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/json',
+                },
+            });
+
+            if (res?.data?.success === true || res?.data?.code === 200) {
+                toast.show({
+                    message: res?.data?.message || 'Product deleted successfully',
+                    type: 'success',
+                    style: 'top',
+                });
+
+                setTimeout(() => {
+                    navigation.goBack();
+                }, 1000);
+            } else {
+                toast.show({
+                    message: res?.data?.message || 'Delete failed',
+                    type: 'error',
+                    style: 'top',
+                });
+            }
+        } catch (error: any) {
+            console.log('DELETE ERROR =>', error?.response?.data || error);
+            toast.show({
+                message: error?.response?.data?.message || 'Product delete failed',
+                type: 'error',
+                style: 'top',
+            });
+        } finally {
+            setDeleteLoading(false);
+        }
+    };
+
+    const confirmDeleteProduct = () => {
+        Alert.alert(
+            'Delete Product',
+            'Are you sure you want to delete this product?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete', style: 'destructive', onPress: handleDeleteProduct },
+            ]
+        );
     };
 
     useEffect(() => {
@@ -533,6 +655,93 @@ const AddProduct = () => {
 
         return () => clearTimeout(timer);
     }, [showSuccessModal, navigation]);
+
+    if (fetching) {
+        return (
+            <SafeAreaView className="flex-1 bg-[#F7F7FA]">
+                <View className="px-5 py-2">
+                    <View className="flex-row items-center">
+                        <View className="w-10">
+                            <AppHeader left={() => <BackButton />} />
+                        </View>
+                        <Text className="text-lg ml-4 font-semibold text-[#111827]">
+                            Edit Product
+                        </Text>
+                    </View>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                    <View className="px-5">
+                        <View className="mt-4 bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                            <SkeletonBox height={24} />
+                            <SkeletonBox height={16} className="mt-3" />
+                            <SkeletonBox height={140} className="mt-4" />
+                            <SkeletonBox height={48} className="mt-5" />
+                        </View>
+
+                        <View className="mt-8">
+                            <SkeletonBox height={18} className="mb-2" />
+                            <SkeletonBox height={56} />
+                        </View>
+
+                        <View className="mt-6">
+                            <SkeletonBox height={18} className="mb-2" />
+                            <SkeletonBox height={56} />
+                        </View>
+
+                        <View className="mt-6">
+                            <SkeletonBox height={18} className="mb-2" />
+                            <SkeletonBox height={110} />
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        );
+    }
+
+    if (!fetching && !productLoaded) {
+        return (
+            <SafeAreaView className="flex-1 bg-[#F7F7FA]">
+                <View className="px-5 py-2">
+                    <View className="flex-row items-center">
+                        <View className="w-10">
+                            <AppHeader left={() => <BackButton />} />
+                        </View>
+                        <Text className="text-lg ml-4 font-semibold text-[#111827]">
+                            Edit Product
+                        </Text>
+                    </View>
+                </View>
+
+                <View className="flex-1 items-center justify-center px-6">
+                    <Ionicons name="alert-circle-outline" size={54} color="#EF4444" />
+                    <Text className="text-[20px] font-bold text-[#111827] mt-4">
+                        Failed to load product
+                    </Text>
+                    <Text className="text-[14px] text-[#6B7280] text-center mt-2">
+                        {fetchError || 'Something went wrong while fetching product details.'}
+                    </Text>
+
+                    <Pressable
+                        onPress={fetchProductDetails}
+                        className="mt-6 bg-[#1F56D8] px-6 py-3 rounded-xl"
+                    >
+                        <Text className="text-white font-semibold text-[16px]">Retry</Text>
+                    </Pressable>
+                </View>
+
+                <Toast
+                    style={toast.style}
+                    visible={toast.visible}
+                    message={toast.message}
+                    type={toast.type}
+                    fadeAnim={toast.fadeAnim}
+                    buttons={toast.buttons}
+                    onHide={toast.hide}
+                />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-[#F7F7FA]">
@@ -547,7 +756,7 @@ const AddProduct = () => {
                         </View>
 
                         <Text className="text-lg ml-4 font-semibold text-[#111827]">
-                            Add Product
+                            Edit Product
                         </Text>
 
                         <View className="w-10" />
@@ -562,26 +771,26 @@ const AddProduct = () => {
                     <View className="px-5">
                         <View className="mt-4 bg-white rounded-2xl border border-[#D1D5DB] border-dashed p-6">
                             <Text className="text-[22px] font-extrabold text-[#111827] text-center">
-                                Upload Product Image
+                                Update Product Image
                             </Text>
 
                             <Text className="text-[14px] text-[#6B7280] text-center mt-2">
-                                Product image upload korun
+                                Product image change korte chaile upload korun
                             </Text>
 
-                            {!imageFile ? (
+                            {!imageFile && !existingImageUrl ? (
                                 <Text className="text-[16px] text-[#6B7280] text-center mt-3 leading-6">
                                     Browse to upload your product image.
                                 </Text>
                             ) : (
                                 <View className="mt-4 items-center">
                                     <Image
-                                        source={{ uri: imageFile.uri }}
+                                        source={{ uri: imageFile?.uri || existingImageUrl }}
                                         style={{ width: 240, height: 140, borderRadius: 12 }}
-                                            resizeMode="cover"
+                                        resizeMode="cover"
                                     />
                                     <Text className="text-[12px] text-[#6B7280] mt-2 text-center">
-                                        {imageFile.name}
+                                        {imageFile?.name || 'Current product image'}
                                     </Text>
                                 </View>
                             )}
@@ -592,7 +801,7 @@ const AddProduct = () => {
                             >
                                 <Ionicons name="cloud-upload-outline" size={20} color="#fff" />
                                 <Text className="text-white text-[16px] font-semibold ml-2">
-                                    {imageFile ? 'Change File' : 'Browse Files'}
+                                    {imageFile || existingImageUrl ? 'Change File' : 'Browse Files'}
                                 </Text>
                             </Pressable>
                         </View>
@@ -775,11 +984,11 @@ const AddProduct = () => {
                                 shadowOffset: { width: 0, height: 10 },
                                 elevation: 6,
                             }}
-                            onPress={handleAddProduct}
-                            disabled={loading}
+                            onPress={handleUpdateProduct}
+                            disabled={loading || deleteLoading || !productLoaded}
                         >
                             <Text className="text-white text-[18px] font-extrabold">
-                                {loading ? 'Submitting...' : 'Add Product'}
+                                {loading ? 'Updating...' : 'Update Product'}
                             </Text>
 
                             {!loading && (
@@ -790,6 +999,18 @@ const AddProduct = () => {
                                     style={{ marginLeft: 10 }}
                                 />
                             )}
+                        </Pressable>
+
+                        <Pressable
+                            className={`mt-4 rounded-2xl py-5 flex-row items-center justify-center ${deleteLoading ? 'bg-red-300' : 'bg-red-500'
+                                }`}
+                            onPress={confirmDeleteProduct}
+                            disabled={deleteLoading || loading || !productLoaded}
+                        >
+                            <Ionicons name="trash-outline" size={22} color="white" />
+                            <Text className="text-white text-[18px] font-extrabold ml-2">
+                                {deleteLoading ? 'Deleting...' : 'Delete Product'}
+                            </Text>
                         </Pressable>
                     </View>
                 </ScrollView>
@@ -881,8 +1102,8 @@ const AddProduct = () => {
 
             <SuccessModal
                 visible={showSuccessModal}
-                title="Product Added!"
-                description="Your product has been added successfully."
+                title="Update Successful!"
+                description="Your product has been updated successfully."
                 onClose={() => {
                     setShowSuccessModal(false);
                     navigation.goBack();
@@ -902,4 +1123,4 @@ const AddProduct = () => {
     );
 };
 
-export default AddProduct;
+export default EditProduct;

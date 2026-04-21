@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Image,
     KeyboardAvoidingView,
@@ -31,16 +31,16 @@ import { AuthStackParamList } from '../../Navigation/types';
 const API_BASE_URL = IPA_BASE;
 const END_POINTS = ADS_CREATE;
 
-
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 type PickedImage = {
     uri: string;
     name: string;
-    type: string; // image/jpeg, image/png etc
+    type: string;
     width?: number;
     height?: number;
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const getExtFromUri = (uri: string) => {
     const clean = uri.split('?')[0];
     const parts = clean.split('.');
@@ -61,15 +61,79 @@ const formatYYYYMMDD = (d: Date) => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+// ─── FieldLabel — defined OUTSIDE component (focus fix) ──────────────────────
+const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+    <Text className="text-[16px] font-semibold text-[#6B7280] mb-2">
+        {children}
+    </Text>
+);
+
+// ─── BoxInput — defined OUTSIDE component (focus fix) ────────────────────────
+const BoxInput = ({
+    placeholder,
+    multiline,
+    value,
+    onChangeText,
+    rightIcon,
+    keyboardType,
+}: {
+    placeholder?: string;
+    multiline?: boolean;
+    value: string;
+    onChangeText: (t: string) => void;
+    rightIcon?: React.ReactNode;
+    keyboardType?: any;
+}) => (
+    <View className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3">
+        <View className="flex-row items-center">
+            <TextInput
+                value={value}
+                onChangeText={onChangeText}
+                placeholder={placeholder}
+                placeholderTextColor="#9CA3AF"
+                keyboardType={keyboardType}
+                className={`flex-1 text-[18px] text-[#111827] ${multiline ? 'min-h-[96px]' : ''}`}
+                multiline={multiline}
+                textAlignVertical={multiline ? 'top' : 'center'}
+            />
+            {rightIcon ? <View className="ml-3">{rightIcon}</View> : null}
+        </View>
+    </View>
+);
+
+// ─── SelectBox — defined OUTSIDE component (focus fix) ───────────────────────
+const SelectBox = ({
+    placeholder,
+    rightIcon,
+    onPress,
+    muted,
+}: {
+    placeholder: string;
+    rightIcon?: React.ReactNode;
+    onPress: () => void;
+    muted?: boolean;
+}) => (
+    <Pressable
+        onPress={onPress}
+        className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-4 flex-row items-center justify-between"
+    >
+        <Text className={`text-[18px] ${muted ? 'text-[#9CA3AF]' : 'text-[#111827]'}`}>
+            {placeholder}
+        </Text>
+        {rightIcon}
+    </Pressable>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const CreateAds = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>();
     const toast = useToast();
     const route = useRoute<any>();
-    console.log(route.params?.adId)
+    console.log(route.params?.adId);
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // form
+    // form fields
     const [title, setTitle] = useState('');
     const [imageFile, setImageFile] = useState<PickedImage | null>(null);
     const [description, setDescription] = useState('');
@@ -89,76 +153,87 @@ const CreateAds = () => {
 
     // image rules by target
     const IMAGE_RULES: Record<string, { width: number; height: number; label: string }> = {
-        Home: { width: 500, height: 200, label: '500 × 200 (Banner)' },
-        Cart: { width: 500, height: 500, label: '500 × 500 (Square)' },
+        Home: { width: 1280, height: 720, label: '1280 × 720 (Banner)' },
+        Cart: { width: 1280, height: 720, label: '1280 × 720 (Square)' },
     };
 
     const activeRule = IMAGE_RULES[targetSection];
 
-    const onChangeTarget = (t: (typeof targets)[number]) => {
+    // useCallback so reference stays stable across renders
+    const onChangeTarget = useCallback((t: (typeof targets)[number]) => {
         setTargetSection(t);
         setTargetModalOpen(false);
-        setImageFile(null); // rule changes, so reset image
-    };
+        setImageFile(null);
+    }, []);
 
+    // ── Budget change — stable with useCallback ───────────────────────────────
+    const onBudgetChange = useCallback((t: string) => {
+        setBudget(t.replace(/[^0-9.]/g, ''));
+    }, []);
+
+    // ── Image Picker ──────────────────────────────────────────────────────────
     const pickImage = async () => {
+        // Request permission
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!perm.granted) {
             toast.show({ message: 'Gallery permission denied', type: 'error', style: 'top' });
             return;
         }
 
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 1,
-            allowsEditing: false,
-            legacy: true, // ✅ content:// issue reduce on Android
-        });
+        let result: ImagePicker.ImagePickerResult;
 
-        if (result.canceled) return;
+        try {
+            result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],      // ✅ new API (array), not deprecated MediaTypeOptions
+                quality: 1,
+                allowsEditing: false,
+                legacy: true,               // ✅ reduces content:// issues on Android
+            });
+        } catch (e: any) {
+            toast.show({ message: 'Image picker failed: ' + (e?.message || ''), type: 'error', style: 'top' });
+            return;
+        }
 
-        const asset = result.assets?.[0];
+        if (result.canceled || !result.assets?.length) return;
+
+        const asset = result.assets[0];
         if (!asset?.uri) return;
-
-        // ✅ dimension check
-        // const w = asset.width ?? 0;
-        // const h = asset.height ?? 0;
-
-        // if (w && h) {
-        //     if (w !== activeRule.width || h !== activeRule.height) {
-        //         toast.show({
-        //             message: `Invalid image size. Required ${activeRule.label}`,
-        //             type: 'error',
-        //             style: 'top',
-        //         });
-        //         return;
-        //     }
-        // }
 
         let uri = asset.uri;
 
-        // ✅ ext + mime fix
+        // ── ext + mime detection ──────────────────────────────────────────────
         let ext =
-            (asset.fileName && asset.fileName.includes('.')
-                ? asset.fileName.split('.').pop()?.toLowerCase()
-                : undefined) || getExtFromUri(uri);
+            asset.fileName && asset.fileName.includes('.')
+                ? asset.fileName.split('.').pop()?.toLowerCase() ?? ''
+                : getExtFromUri(uri);
 
-        ext = ext || getExtFromUri(uri);
+        if (!ext) ext = 'jpg';
 
-        let mime = (asset as any).mimeType || mimeFromExt(ext);
+        let mime: string = (asset as any).mimeType || mimeFromExt(ext);
 
-        // ✅ HEIC/HEIF => JPG convert (backend image type error fix)
-        if (mime === 'image/heic' || ext === 'heic' || ext === 'heif') {
-            const manipulated = await ImageManipulator.manipulateAsync(
-                uri,
-                [],
-                { compress: 1, format: ImageManipulator.SaveFormat.JPEG }
-            );
-            uri = manipulated.uri;
-            ext = 'jpg';
-            mime = 'image/jpeg';
+        // ── HEIC/HEIF → JPEG convert ──────────────────────────────────────────
+        if (
+            mime === 'image/heic' ||
+            mime === 'image/heif' ||
+            ext === 'heic' ||
+            ext === 'heif'
+        ) {
+            try {
+                const manipulated = await ImageManipulator.manipulateAsync(
+                    uri,
+                    [],
+                    { compress: 0.92, format: ImageManipulator.SaveFormat.JPEG }
+                );
+                uri = manipulated.uri;
+                ext = 'jpg';
+                mime = 'image/jpeg';
+            } catch (e: any) {
+                toast.show({ message: 'HEIC conversion failed', type: 'error', style: 'top' });
+                return;
+            }
         }
 
+        // ── fileName ──────────────────────────────────────────────────────────
         const fileName =
             asset.fileName && asset.fileName.includes('.')
                 ? asset.fileName.replace(/\.(heic|heif)$/i, '.jpg')
@@ -173,10 +248,10 @@ const CreateAds = () => {
         });
     };
 
+    // ── Submit ────────────────────────────────────────────────────────────────
     const handleSaveChanges = async () => {
         const token = await AsyncStorage.getItem('vToken');
 
-        // ✅ required validation
         if (!token) {
             toast.show({ message: 'Token missing', type: 'error', style: 'top' });
             return;
@@ -238,7 +313,6 @@ const CreateAds = () => {
         formData.append('start_date', formatYYYYMMDD(startDate));
         formData.append('end_date', formatYYYYMMDD(endDate));
 
-        // ✅ correct RN file append (image type error fix)
         formData.append('image', {
             uri: imageFile.uri,
             name: imageFile.name || `ad_${Date.now()}.jpg`,
@@ -260,6 +334,8 @@ const CreateAds = () => {
                 toast.show({ message: 'Ads create failed', type: 'error', style: 'top' });
             }
         } catch (error: any) {
+            console.error('POST error full:', JSON.stringify(error?.response?.data, null, 2));
+            console.error('POST status:', error?.response?.status);
             console.error('POST error:', error?.response?.data || error);
             toast.show({
                 message: error?.response?.data?.message || 'Ads create failed',
@@ -268,50 +344,6 @@ const CreateAds = () => {
             });
         }
     };
-
-    const FieldLabel = ({ children }: any) => (
-        <Text className="text-[16px] font-semibold text-[#6B7280] mb-2">
-            {children}
-        </Text>
-    );
-
-    const BoxInput = ({
-        placeholder,
-        multiline,
-        value,
-        onChangeText,
-        rightIcon,
-        keyboardType,
-    }: any) => (
-        <View className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3">
-            <View className="flex-row items-center">
-                <TextInput
-                    value={value}
-                    onChangeText={onChangeText}
-                    placeholder={placeholder}
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType={keyboardType}
-                    className={`flex-1 text-[18px] text-[#111827] ${multiline ? 'min-h-[96px]' : ''
-                        }`}
-                    multiline={multiline}
-                    textAlignVertical={multiline ? 'top' : 'center'}
-                />
-                {rightIcon ? <View className="ml-3">{rightIcon}</View> : null}
-            </View>
-        </View>
-    );
-
-    const SelectBox = ({ placeholder, rightIcon, onPress, muted }: any) => (
-        <Pressable
-            onPress={onPress}
-            className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-4 flex-row items-center justify-between"
-        >
-            <Text className={`text-[18px] ${muted ? 'text-[#9CA3AF]' : 'text-[#111827]'}`}>
-                {placeholder}
-            </Text>
-            {rightIcon}
-        </Pressable>
-    );
 
     useEffect(() => {
         if (!showSuccessModal) return;
@@ -344,6 +376,7 @@ const CreateAds = () => {
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ paddingBottom: 24 }}
+                    keyboardShouldPersistTaps="handled"
                 >
                     <View className="px-5">
                         {/* Upload Box */}
@@ -431,7 +464,7 @@ const CreateAds = () => {
                                 placeholder="0.00"
                                 value={budget}
                                 keyboardType="numeric"
-                                onChangeText={(t: string) => setBudget(t.replace(/[^0-9.]/g, ''))}
+                                onChangeText={onBudgetChange}
                                 rightIcon={<Text className="text-[#6B7280] font-semibold">$</Text>}
                             />
                         </View>
@@ -453,7 +486,9 @@ const CreateAds = () => {
                                         placeholder={startDate ? formatYYYYMMDD(startDate) : 'mm/dd/yyyy'}
                                         muted={!startDate}
                                         onPress={() => setShowStartPicker(true)}
-                                        rightIcon={<Ionicons name="calendar-outline" size={20} color="#6B7280" />}
+                                        rightIcon={
+                                            <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                                        }
                                     />
                                 </View>
                                 <View className="flex-1">
@@ -461,7 +496,9 @@ const CreateAds = () => {
                                         placeholder={endDate ? formatYYYYMMDD(endDate) : 'mm/dd/yyyy'}
                                         muted={!endDate}
                                         onPress={() => setShowEndPicker(true)}
-                                        rightIcon={<Ionicons name="calendar-outline" size={20} color="#6B7280" />}
+                                        rightIcon={
+                                            <Ionicons name="calendar-outline" size={20} color="#6B7280" />
+                                        }
                                     />
                                 </View>
                             </View>
@@ -517,7 +554,7 @@ const CreateAds = () => {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Target modal */}
+            {/* Target Modal */}
             <Modal
                 transparent
                 visible={targetModalOpen}

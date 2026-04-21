@@ -39,7 +39,7 @@ const ProfileSetup = () => {
 
     const [interestsItem, setInterestsItem] = useState<string[]>([]);
     const [image, setImage] = useState<any>(null);
-    const [address, setAddress] = useState<string>('');
+    const [address, setAddress] = useState<string>('Chicago IL');
     const [referCode, setReFerCode] = useState<string>('');
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -70,15 +70,7 @@ const ProfileSetup = () => {
     const selectedImageUri = image?.assets?.[0]?.uri;
 
     const handleSubmit = async () => {
-        if (!image || image.canceled || !image.assets?.[0]) {
-            Alert.alert('Error', 'Please select a profile picture');
-            return;
-        }
-        if (!address.trim()) {
-            Alert.alert('Error', 'Please enter your address');
-            return;
-        }
-
+        
         const selectedImage = image.assets[0];
         const formData = new FormData();
         formData.append('email', params.email || '');
@@ -166,7 +158,7 @@ const ProfileSetup = () => {
                                 style={styles.textInput}
                                 value={address}
                                 onChangeText={setAddress}
-                                placeholder="Gulshan 1, Dhaka 1200"
+                                placeholder="Chicago IL"
                                 placeholderTextColor="#9CA3AF"
                                 autoCorrect={false}
                             />

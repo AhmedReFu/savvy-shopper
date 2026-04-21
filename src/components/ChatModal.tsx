@@ -3,14 +3,17 @@ import React from 'react'
 import {
     Dimensions,
     Image,
+    KeyboardAvoidingView,
     Modal,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const { height } = Dimensions.get('window')
 
@@ -20,6 +23,9 @@ interface ChatBotModalProps {
 }
 
 const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
+    // ✅ FIX 1: Get safe area insets to pad above navigation bar
+    const insets = useSafeAreaInsets()
+
     const products = [
         {
             id: '1',
@@ -28,8 +34,8 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
             originalPrice: 420,
             discount: '-45%',
             image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=400',
-            seller: 'Amazon'
-        }
+            seller: 'Amazon',
+        },
     ]
 
     const runningShoes = [
@@ -40,7 +46,7 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
             originalPrice: 399,
             discount: '-40%',
             image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
-            seller: 'Amazon'
+            seller: 'Amazon',
         },
         {
             id: '3',
@@ -49,8 +55,8 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
             originalPrice: 199,
             discount: '-50%',
             image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=400',
-            seller: 'Amazon'
-        }
+            seller: 'Amazon',
+        },
     ]
 
     return (
@@ -61,7 +67,21 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
             onRequestClose={onClose}
         >
             <View style={styles.overlay}>
-                <View style={styles.modalContainer}>
+                {/*
+                  ✅ FIX 2: KeyboardAvoidingView inside the modal container.
+                  - iOS: 'padding' pushes content up
+                  - Android: 'height' shrinks the view
+                  paddingBottom from insets ensures input is above the nav bar.
+                */}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={[
+                        styles.modalContainer,
+                        // ✅ FIX 3: Add bottom inset so input never hides behind nav bar
+                        { paddingBottom: insets.bottom },
+                    ]}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                >
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.headerLeft}>
@@ -79,8 +99,8 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                     <ScrollView
                         style={styles.chatContent}
                         showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
                     >
-                        {/* Time */}
                         <Text style={styles.timeText}>08:15 AM</Text>
 
                         {/* Assistant Message 1 */}
@@ -94,7 +114,6 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                                     Hi! I found some price drops on items similar to your recent searches.
                                 </Text>
 
-                                {/* Product Card */}
                                 {products.map((product) => (
                                     <View key={product.id} style={styles.productCard}>
                                         <View style={styles.productImageContainer}>
@@ -130,9 +149,7 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                         {/* User Message */}
                         <View style={styles.userMessageContainer}>
                             <View style={styles.userMessage}>
-                                <Text style={styles.userMessageText}>
-                                    Show me running shoes under $100
-                                </Text>
+                                <Text style={styles.userMessageText}>Show me running shoes under $100</Text>
                             </View>
                         </View>
 
@@ -147,11 +164,11 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                                     Here are top-rated running shoes under $100 currently on sale:
                                 </Text>
 
-                                {/* Running Shoes - Horizontal Scroll */}
                                 <ScrollView
                                     horizontal
                                     showsHorizontalScrollIndicator={false}
                                     style={styles.horizontalScroll}
+                                    keyboardShouldPersistTaps="handled"
                                 >
                                     {runningShoes.map((shoe) => (
                                         <View key={shoe.id} style={styles.shoeCard}>
@@ -169,9 +186,7 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                                                 </TouchableOpacity>
                                             </View>
                                             <View style={styles.shoeInfo}>
-                                                <Text style={styles.shoeName} numberOfLines={1}>
-                                                    {shoe.name}
-                                                </Text>
+                                                <Text style={styles.shoeName} numberOfLines={1}>{shoe.name}</Text>
                                                 <View style={styles.priceRow}>
                                                     <Text style={styles.price}>${shoe.price}</Text>
                                                     <Text style={styles.originalPrice}>${shoe.originalPrice}</Text>
@@ -186,7 +201,6 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                                     ))}
                                 </ScrollView>
 
-                                {/* Action Buttons */}
                                 <View style={styles.actionButtons}>
                                     <TouchableOpacity style={styles.actionButton}>
                                         <Text style={styles.actionButtonText}>Compare these 3</Text>
@@ -198,21 +212,23 @@ const ChatModal = ({ visible, onClose }: ChatBotModalProps) => {
                             </View>
                         </View>
 
-                        <View style={{ height: 80 }} />
+                        {/* ✅ FIX 4: Bottom spacer so last message isn't hidden behind input */}
+                        <View style={{ height: 16 }} />
                     </ScrollView>
 
-                    {/* Input Area */}
+                    {/* ✅ FIX 5: Input area — no absolute positioning, sits above keyboard naturally */}
                     <View style={styles.inputContainer}>
                         <TextInput
                             style={styles.input}
                             placeholder="Type a message..."
                             placeholderTextColor="#9CA3AF"
+                            returnKeyType="send"
                         />
                         <TouchableOpacity style={styles.sendButton}>
                             <Ionicons name="send" size={20} color="white" />
                         </TouchableOpacity>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </View>
         </Modal>
     )
@@ -226,12 +242,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'flex-end',
     },
+    // ✅ FIX: No hardcoded paddingBottom:0 — padding is dynamic via insets
     modalContainer: {
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         height: height * 0.85,
-        paddingBottom: 0,
     },
     header: {
         flexDirection: 'row',
@@ -448,7 +464,8 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         borderTopWidth: 1,
         borderTopColor: '#F3F4F6',
         backgroundColor: '#FFFFFF',
@@ -459,7 +476,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#F9FAFB',
         borderRadius: 24,
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: Platform.OS === 'ios' ? 12 : 10,
         fontSize: 14,
         color: '#1F2937',
     },

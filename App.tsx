@@ -7,13 +7,13 @@ import { AuthStackParamList } from './src/Navigation/types';
 import AdsPerformance from './src/screens/Ads/AdsPerformance';
 import CreateAds from './src/screens/Ads/CreateAds';
 import MyAds from './src/screens/Ads/MyAds';
-import CreateNewPassword from './src/screens/Auth_Screen/CreateNewPassword';
-import OtpAuth from './src/screens/Auth_Screen/OtpAuth';
-import OtpResetPassword from './src/screens/Auth_Screen/OtpResetPassword';
-import ProfileSetup from './src/screens/Auth_Screen/ProfileSetup';
-import ResetPassword from './src/screens/Auth_Screen/ResetPassword';
-import SignIn from './src/screens/Auth_Screen/SignIn';
-import SignUp from './src/screens/Auth_Screen/SignUp';
+import CreateNewPassword from './src/screens/Auth/CreateNewPassword';
+import OtpAuth from './src/screens/Auth/OtpAuth';
+import OtpResetPassword from './src/screens/Auth/OtpResetPassword';
+import ProfileSetup from './src/screens/Auth/ProfileSetup';
+import ResetPassword from './src/screens/Auth/ResetPassword';
+import SignIn from './src/screens/Auth/SignIn';
+import SignUp from './src/screens/Auth/SignUp';
 import CheckoutOptions from './src/screens/Home/CheckoutOptions';
 import ProductDetails from './src/screens/Home/ProductDetails';
 import SavingsSummary from './src/screens/Home/SavingsSummary';
@@ -29,11 +29,12 @@ import PrivacyPolicy from './src/screens/Settings/PrivacyPolicy';
 import ReFarAndEarn from './src/screens/Settings/ReFarAndEarn';
 import UpdatePassword from './src/screens/Settings/UpdatePassword';
 import Subscription from './src/screens/Subscriptions/Subscription';
-import MainTabs from './src/screens/TabNavigation/TabNavigation';
+import MainTabs from './src/screens/Navigation/TabNavigation';
 import AdsApply from './src/screens/Settings/AdsApply';
 import ShopCreate from './src/screens/Settings/ShopCreate';
 import ShopDashboard from './src/screens/Shop/ShopDashboard';
 import AddProduct from './src/screens/Shop/AddProduct';
+import EditProduct from './src/screens/Shop/EditProduct';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -52,6 +53,7 @@ function AuthStack() {
       <Stack.Screen name="AdsPerformance" component={AdsPerformance} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="NotificationSettings" component={NotificationSettings} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="MyFavourite" component={MyFavourite} options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="EditProduct" component={EditProduct} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="UpdatePassword" component={UpdatePassword} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="EditProfile" component={EditProfile} options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="ShopCreate" component={ShopCreate} options={{ animation: "slide_from_right" }} />

@@ -31,4 +31,5 @@ export type AuthStackParamList = {
   ShopCreate: undefined;
   ShopDashboard: undefined;
   AddProduct: undefined;
+  EditProduct: undefined;
 };

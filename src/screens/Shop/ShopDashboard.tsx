@@ -6,7 +6,7 @@ import {
     SHOP_ORDERS,
     SHOP_PRODUCT,
 } from '@env';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     NavigationProp,
@@ -14,6 +14,7 @@ import {
     useNavigation,
 } from '@react-navigation/native';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -475,9 +476,11 @@ const ShopDashboard = () => {
 
     const renderHeader = () => (
         <View>
+
             <View
-                className="bg-[#1F56D8] rounded-3xl mt-4 px-5 py-5"
+                className="rounded-3xl mt-4 overflow-hidden"
                 style={{
+                    backgroundColor: '#203A8F',
                     shadowColor: '#000',
                     shadowOpacity: 0.14,
                     shadowRadius: 14,
@@ -485,13 +488,141 @@ const ShopDashboard = () => {
                     elevation: 4,
                 }}
             >
-                <Text className="text-white text-[24px] font-extrabold">
-                    {shopDetails?.shop_name || 'My Shop'}
-                </Text>
+                {/* Main background gradient */}
+                <LinearGradient
+                    colors={['#1E2F73', '#2946A6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ paddingHorizontal: 20, paddingVertical: 24, position: 'relative' }}
+                >
+                    {/* Top soft wave */}
+                    <View
+                        style={{
+                            position: 'absolute',
+                            top: 60,
+                            left: -40,
+                            width: 220,
+                            height: 80,
+                            backgroundColor: 'rgba(255,255,255,0.08)',
+                            borderRadius: 999,
+                            transform: [{ rotate: '8deg' }],
+                        }}
+                    />
 
-                <Text className="text-white/85 text-[14px] mt-2 leading-5">
-                    {shopDetails?.shop_description || 'No shop description available'}
-                </Text>
+                    <View
+                        style={{
+                            position: 'absolute',
+                            top: 70,
+                            right: -30,
+                            width: 250,
+                            height: 90,
+                            backgroundColor: 'rgba(255,255,255,0.07)',
+                            borderRadius: 999,
+                            transform: [{ rotate: '-8deg' }],
+                        }}
+                    />
+
+                    {/* Bottom overlay area */}
+                    <View
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: 110,
+                            backgroundColor: 'rgba(255,255,255,0.10)',
+                            borderTopLeftRadius: 120,
+                            borderTopRightRadius: 120,
+                        }}
+                    />
+
+                    <Text
+                        style={{
+                            color: '#B9C7FF',
+                            fontSize: 12,
+                            fontWeight: '600',
+                            marginBottom: 14,
+                            letterSpacing: 1,
+                        }}
+                    >
+                        SELLER DASHBOARD
+                    </Text>
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View style={{ flex: 1, paddingRight: 16 }}>
+                            <Text style={{ color: 'white', fontSize: 24, fontWeight: '800' }}>
+                                {shopDetails?.shop_name || 'My Shop'}
+                            </Text>
+
+                            <Text
+                                style={{
+                                    color: 'rgba(255,255,255,0.85)',
+                                    fontSize: 14,
+                                    marginTop: 10,
+                                    lineHeight: 20,
+                                }}
+                            >
+                                {shopDetails?.shop_description ||
+                                    'Manage your products, track inventory, and grow your business with ease.'}
+                            </Text>
+
+                            <View style={{ flexDirection: 'row', marginTop: 18, gap: 10 }}>
+                                <View
+                                    style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        backgroundColor: 'rgba(255,255,255,0.10)',
+                                        borderWidth: 1,
+                                        borderColor: 'rgba(255,255,255,0.15)',
+                                        borderRadius: 999,
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 10,
+                                    }}
+                                >
+                                    <Feather name="box" size={16} color="white" />
+                                    <Text style={{ color: 'white', marginLeft: 8, fontWeight: '700' }}>
+                                        {stats.totalProducts} Products
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+
+                        <Pressable style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                            <LinearGradient
+                                colors={['#7C3AED', '#8B5CF6']}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={{
+                                    width: 68,
+                                    height: 68,
+                                    borderRadius: 18,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    borderWidth: 1,
+                                    borderColor: 'rgba(255,255,255,0.18)',
+                                }}
+                            >
+                                {shopDetails?.shop_logo ? (
+                                    <Image
+                                        source={{ uri: shopDetails.shop_logo }}
+                                        style={{ width: 68, height: 68, borderRadius: 18 }}
+                                    />
+                                ) : (
+                                    <Text style={{ color: 'white', fontSize: 24, fontWeight: '800' }}>
+                                        {shopDetails?.shop_name?.charAt(0)?.toUpperCase() || 'M'}
+                                    </Text>
+                                )}
+                            </LinearGradient>
+
+                            <MaterialIcons
+                                name="edit-square"
+                                size={22}
+                                color="white"
+                                className='absolute right-0 bottom-14'
+                            />
+                        </Pressable>
+                    </View>
+                </LinearGradient>
             </View>
 
             <ScrollView
@@ -532,6 +663,7 @@ const ShopDashboard = () => {
 
         return (
             <View
+
                 className="bg-white rounded-3xl mb-5 overflow-hidden"
                 style={{
                     shadowColor: '#000',
@@ -580,6 +712,11 @@ const ShopDashboard = () => {
                             {item.status_display}
                         </Text>
                     </View>
+                    <Pressable onPress={() => (navigation as any).navigate("EditProduct", {
+                        productId: item.id
+                    })} className='bg-blue-200 py-2 px-4 rounded-full'>
+                        <Text className="text-[13px] font-medium text-[#1F56D8]"> Edit & Update</Text>
+                    </Pressable>
                 </View>
             </View>
         );

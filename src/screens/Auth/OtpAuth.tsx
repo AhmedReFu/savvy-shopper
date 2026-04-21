@@ -7,6 +7,7 @@ import {
     Image,
     KeyboardAvoidingView,
     Platform,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -54,7 +55,6 @@ const OtpAuth = () => {
         return () => clearInterval(t);
     }, [timer]);
 
-    // ✅ iOS autofocus glitch fix: focus after mount
     useEffect(() => {
         const t = setTimeout(() => inputsRef.current[0]?.focus(), 200);
         return () => clearTimeout(t);
@@ -65,7 +65,6 @@ const OtpAuth = () => {
         const newCode = [...code];
         newCode[index] = numericText;
         setCode(newCode);
-
         if (numericText && index < 3) {
             requestAnimationFrame(() => inputsRef.current[index + 1]?.focus());
         }
@@ -86,18 +85,14 @@ const OtpAuth = () => {
             Alert.alert('Error', 'Please enter the full 4-digit OTP.');
             return;
         }
-
         try {
             setIsVerifying(true);
-
             const res = await axios.post(
                 `${API_BASE_URL}${END_POINTS}`,
                 { email: params.email, otp: enteredCode },
                 { headers: { 'Content-Type': 'application/json' }, timeout: 15000 },
             );
-
             const data = res.data;
-
             if (data?.success === true) {
                 setShowSuccessModal(true);
                 setTimeout(() => {
@@ -105,8 +100,7 @@ const OtpAuth = () => {
                     navigation.navigate('ProfileSetup', { email: params.email } as any);
                 }, 1500);
             } else {
-                const msg = data?.message || 'Invalid OTP';
-                Alert.alert('OTP Failed', msg);
+                Alert.alert('OTP Failed', data?.message || 'Invalid OTP');
                 setCode(['', '', '', '']);
                 requestAnimationFrame(() => inputsRef.current[0]?.focus());
             }
@@ -146,98 +140,104 @@ const OtpAuth = () => {
     };
 
     return (
-        <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+        // ✅ FIX 1: Added 'bottom' edge
+        <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safe}>
+            {/* ✅ FIX 2: 'height' for Android */}
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
-                <View style={styles.page}>
-                    <AppHeader left={() => <BackButton />} />
+                {/* ✅ FIX 3: Wrap in ScrollView so content scrolls above keyboard */}
+                <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+                >
+                    <View style={styles.page}>
+                        <AppHeader left={() => <BackButton />} />
 
-                    <View style={styles.logoContainer}>
-                        <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
-                    </View>
-
-                    <View style={styles.content}>
-                        <Text style={styles.title}>Verification Code</Text>
-                        <Text style={styles.subTitle}>
-                            Enter the verification code that we have sent to your email.
-                        </Text>
-
-                        <View style={styles.otpRow}>
-                            {code.map((digit, index) => (
-                                <TextInput
-                                    key={index}
-                                    placeholder="0"
-                                    placeholderTextColor="#6B7280"
-                                    ref={(ref) => {
-                                        if (ref) inputsRef.current[index] = ref;
-                                    }}
-                                    style={[
-                                        styles.otpInput,
-                                        { borderColor: digit ? '#2355B6' : '#E5E7EB' },
-                                    ]}
-                                    keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
-                                    inputMode="numeric"
-                                    maxLength={1}
-                                    value={digit}
-                                    onChangeText={(text) => handleChange(text, index)}
-                                    onKeyPress={(e) => handleKeyPress(e, index)}
-                                    editable={!isVerifying}
-                                    // ✅ iOS baseline fix
-                                    textAlignVertical="center"
-                                    // remove autoFocus per-input (iOS glitch)
-                                    autoFocus={false}
-                                    selectTextOnFocus
-                                    returnKeyType="done"
-                                />
-                            ))}
+                        <View style={styles.logoContainer}>
+                            <Image source={Images.Logo} style={styles.logoImage} resizeMode="contain" />
                         </View>
 
-                        <View style={styles.optionsRow}>
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                <Text style={styles.infoText}>Didn't receive the code?</Text>
-                                <Text
-                                    style={[styles.infoText, { color: canResend ? '#EB4335' : 'rgba(235,67,53,0.5)' }]}
-                                    onPress={handleResend}
-                                >
-                                    {' '}
-                                    Resend code
-                                </Text>
+                        <View style={styles.content}>
+                            <Text style={styles.title}>Verification Code</Text>
+                            <Text style={styles.subTitle}>
+                                Enter the verification code that we have sent to your email.
+                            </Text>
+
+                            <View style={styles.otpRow}>
+                                {code.map((digit, index) => (
+                                    <TextInput
+                                        key={index}
+                                        placeholder="0"
+                                        placeholderTextColor="#6B7280"
+                                        ref={(ref) => {
+                                            if (ref) inputsRef.current[index] = ref;
+                                        }}
+                                        style={[
+                                            styles.otpInput,
+                                            { borderColor: digit ? '#2355B6' : '#E5E7EB' },
+                                        ]}
+                                        keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
+                                        inputMode="numeric"
+                                        maxLength={1}
+                                        value={digit}
+                                        onChangeText={(text) => handleChange(text, index)}
+                                        onKeyPress={(e) => handleKeyPress(e, index)}
+                                        editable={!isVerifying}
+                                        textAlignVertical="center"
+                                        autoFocus={false}
+                                        selectTextOnFocus
+                                        returnKeyType="done"
+                                    />
+                                ))}
                             </View>
 
-                            <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                                <Text style={styles.timeText}>Resend code at </Text>
-                                <Text style={[styles.timeText, { color: '#2355B6' }]}>{formatTime(timer)}</Text>
-                            </View>
-                        </View>
-
-                        <TouchableOpacity
-                            style={[styles.mainButton, { opacity: isVerifying ? 0.7 : 1 }]}
-                            onPress={handleVerifyPress}
-                            activeOpacity={0.9}
-                            disabled={isVerifying}
-                        >
-                            {isVerifying ? (
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <ActivityIndicator color="#fff" />
-                                    <Text style={[styles.mainButtonText, { marginLeft: 10 }]}>Verifying...</Text>
+                            <View style={styles.optionsRow}>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                    <Text style={styles.infoText}>Didn't receive the code?</Text>
+                                    <Text
+                                        style={[styles.infoText, { color: canResend ? '#EB4335' : 'rgba(235,67,53,0.5)' }]}
+                                        onPress={handleResend}
+                                    >
+                                        {' '}Resend code
+                                    </Text>
                                 </View>
-                            ) : (
-                                <Text style={styles.mainButtonText}>Verify OTP</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                </View>
+                                <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                                    <Text style={styles.timeText}>Resend code at </Text>
+                                    <Text style={[styles.timeText, { color: '#2355B6' }]}>{formatTime(timer)}</Text>
+                                </View>
+                            </View>
 
-                <SuccessModal
-                    visible={showSuccessModal}
-                    title="Successful!"
-                    description="Your registration was completed successfully"
-                    onClose={() => setShowSuccessModal(false)}
-                />
+                            <TouchableOpacity
+                                style={[styles.mainButton, { opacity: isVerifying ? 0.7 : 1 }]}
+                                onPress={handleVerifyPress}
+                                activeOpacity={0.9}
+                                disabled={isVerifying}
+                            >
+                                {isVerifying ? (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <ActivityIndicator color="#fff" />
+                                        <Text style={[styles.mainButtonText, { marginLeft: 10 }]}>Verifying...</Text>
+                                    </View>
+                                ) : (
+                                    <Text style={styles.mainButtonText}>Verify OTP</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </ScrollView>
             </KeyboardAvoidingView>
+
+            <SuccessModal
+                visible={showSuccessModal}
+                title="Successful!"
+                description="Your registration was completed successfully"
+                onClose={() => setShowSuccessModal(false)}
+            />
         </SafeAreaView>
     );
 };
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
     page: {
         flex: 1,
         paddingHorizontal: 20,
+        paddingBottom: 40,
     },
-
     logoContainer: {
         alignItems: 'center',
         paddingTop: 0,
@@ -262,10 +262,8 @@ const styles = StyleSheet.create({
         width: width * 0.4,
         height: height * 0.1,
     },
-
     content: {
         marginTop: 24,
-        flex: 1,
     },
     title: {
         fontSize: 30,
@@ -279,7 +277,6 @@ const styles = StyleSheet.create({
         color: '#636F85',
         marginTop: 12,
     },
-
     otpRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -290,16 +287,15 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         textAlign: 'center',
-        textAlignVertical: 'center', // ✅ iOS vertical center
+        textAlignVertical: 'center',
         borderRadius: 12,
         fontSize: 24,
         fontWeight: 'bold',
         borderWidth: 2,
         backgroundColor: '#FFFFFF',
         color: '#111827',
-        paddingVertical: Platform.OS === 'ios' ? 0 : 2, // ✅ iOS baseline
+        paddingVertical: Platform.OS === 'ios' ? 0 : 2,
     },
-
     optionsRow: {
         flexDirection: 'column',
         alignItems: 'center',
@@ -314,7 +310,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#111827',
     },
-
     mainButton: {
         backgroundColor: '#2355B6',
         borderRadius: 12,

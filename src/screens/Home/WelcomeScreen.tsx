@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
@@ -53,8 +54,15 @@ const WelcomeScreen = () => {
     }, []);
 
     useEffect(() => {
-        const t = setTimeout(() => {
-            (navigation as any).replace("SignIn"); // replace is better for splash screens
+        const t = setTimeout(async () => {
+
+            const token = await AsyncStorage.getItem('vToken')
+            if (!token) {
+                (navigation as any).replace("SignIn");
+            } else {
+                (navigation as any).replace("MainTabs");
+            }
+        // replace is better for splash screens
         }, 3000);
 
         return () => clearTimeout(t);

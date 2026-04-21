@@ -40,8 +40,8 @@ const PremiumModal = ({ visible, onClose }: PremiumModalProps) => {
             id: '3',
             icon: 'scan',
             iconType: 'ionicons',
-            title: 'Ad-Free Scanning',
-            description: 'Scan barcodes instantly without interruptions or ads.',
+            title: 'Scanning Unlimited',
+            description: 'Scanning instantly without hassle.',
         },
     ]
 

@@ -6,6 +6,7 @@ import {
     IPA_BASE,
     PRODUCT_DETAILS,
     REMOVE_FAVORITE,
+    TOTAL_SUMMERY_POST,
 } from '@env'
 import {
     Entypo,
@@ -17,13 +18,16 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native'
 import axios from 'axios'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
     ActivityIndicator,
+    Animated,
+    Easing,
     FlatList,
     Image,
     ImageSourcePropType,
     Linking,
+    Modal,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -77,6 +81,7 @@ type ProductData = {
     id: number | string
     title: string
     slug?: string
+    price?: number
     platform_name: string
     description?: string
     category?: string | null
@@ -89,6 +94,8 @@ type ProductData = {
     created_at?: string
     is_favorite?: boolean
     is_cart?: boolean
+    rating: number
+    review_count: number
 }
 
 type CompareItem = {
@@ -123,6 +130,360 @@ const getPlatformLogo = (platformName: string): ImageSourcePropType | null => {
     return null
 }
 
+// ─── Skeleton Pulse Component ────────────────────────────────────────────────
+const SkeletonBox = ({
+    width,
+    height,
+    borderRadius = 8,
+    style,
+}: {
+    width?: number | string
+    height: number
+    borderRadius?: number
+    style?: any
+}) => {
+    const opacity = useRef(new Animated.Value(0.3)).current
+
+    useEffect(() => {
+        const pulse = Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacity, {
+                    toValue: 1,
+                    duration: 800,
+                    easing: Easing.ease,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(opacity, {
+                    toValue: 0.3,
+                    duration: 800,
+                    easing: Easing.ease,
+                    useNativeDriver: true,
+                }),
+            ])
+        )
+        pulse.start()
+        return () => pulse.stop()
+    }, [])
+
+    return (
+        <Animated.View
+            style={[
+                {
+                    width: width ?? '100%',
+                    height,
+                    borderRadius,
+                    backgroundColor: '#E2E8F0',
+                    opacity,
+                },
+                style,
+            ]}
+        />
+    )
+}
+
+// ─── Skeleton Screen ─────────────────────────────────────────────────────────
+const ProductDetailsSkeleton = () => {
+    return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#F9F9FB' }}>
+            {/* Header */}
+            <View style={skeletonStyles.header}>
+                <SkeletonBox width={36} height={36} borderRadius={18} />
+                <SkeletonBox width={140} height={20} borderRadius={6} style={{ marginLeft: 12 }} />
+            </View>
+
+            {/* Hero image */}
+            <SkeletonBox width="100%" height={300} borderRadius={0} />
+
+            <ScrollView style={{ paddingHorizontal: 20 }} scrollEnabled={false}>
+                {/* Title + platform row */}
+                <View style={skeletonStyles.row}>
+                    <View style={{ flex: 1, gap: 8 }}>
+                        <SkeletonBox width="90%" height={22} borderRadius={6} />
+                        <SkeletonBox width="60%" height={18} borderRadius={6} />
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 8 }}>
+                        <SkeletonBox width={100} height={20} borderRadius={6} />
+                        <SkeletonBox width={90} height={32} borderRadius={999} />
+                    </View>
+                </View>
+
+                {/* Price card */}
+                <View style={skeletonStyles.card}>
+                    <View style={skeletonStyles.row}>
+                        <SkeletonBox width={160} height={16} borderRadius={5} />
+                        <SkeletonBox width={80} height={30} borderRadius={10} />
+                    </View>
+                    <SkeletonBox width={140} height={40} borderRadius={8} style={{ marginTop: 14 }} />
+                    <SkeletonBox width={100} height={16} borderRadius={5} style={{ marginTop: 8 }} />
+                    <View style={[skeletonStyles.row, { marginTop: 20, gap: 12 }]}>
+                        <SkeletonBox width={80} height={56} borderRadius={12} />
+                        <SkeletonBox width={200} height={56} borderRadius={12} />
+                    </View>
+                </View>
+
+                {/* Description card */}
+                <View style={skeletonStyles.card}>
+                    <SkeletonBox width={120} height={22} borderRadius={6} style={{ marginBottom: 14 }} />
+                    <SkeletonBox height={14} borderRadius={5} style={{ marginBottom: 8 }} />
+                    <SkeletonBox width="92%" height={14} borderRadius={5} style={{ marginBottom: 8 }} />
+                    <SkeletonBox width="80%" height={14} borderRadius={5} style={{ marginBottom: 8 }} />
+                    <SkeletonBox width="70%" height={14} borderRadius={5} />
+                </View>
+
+                {/* Compare section */}
+                <View style={{ marginTop: 8 }}>
+                    <SkeletonBox width={160} height={22} borderRadius={6} style={{ marginBottom: 14 }} />
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                        {[1, 2, 3].map((i) => (
+                            <View key={i} style={skeletonStyles.compareCard}>
+                                <SkeletonBox height={138} borderRadius={0} />
+                                <View style={{ padding: 12, gap: 8 }}>
+                                    <SkeletonBox height={14} borderRadius={4} />
+                                    <SkeletonBox width="60%" height={14} borderRadius={4} />
+                                    <SkeletonBox width={80} height={28} borderRadius={6} />
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    )
+}
+
+const skeletonStyles = StyleSheet.create({
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 14,
+        borderBottomWidth: 2,
+        borderBottomColor: '#E5E7EB',
+        marginBottom: 4,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 16,
+    },
+    card: {
+        borderWidth: 2,
+        borderColor: '#E5E7EB',
+        padding: 20,
+        borderRadius: 16,
+        marginTop: 16,
+        backgroundColor: '#fff',
+    },
+    compareCard: {
+        width: 160,
+        borderRadius: 16,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        backgroundColor: '#fff',
+    },
+})
+
+// ─── Empty State Component ────────────────────────────────────────────────────
+const EmptyState = ({ onRetry }: { onRetry: () => void }) => (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9F9FB' }}>
+        <View style={emptyStyles.header}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                <BackButton />
+                <Text style={emptyStyles.headerTitle}>Product Detail</Text>
+            </View>
+        </View>
+        <View style={emptyStyles.container}>
+            <View style={emptyStyles.iconWrap}>
+                <MaterialIcons name="inventory-2" size={52} color="#CBD5E1" />
+            </View>
+            <Text style={emptyStyles.title}>Product Not Found</Text>
+            <Text style={emptyStyles.subtitle}>
+                We couldn't load the product details.{'\n'}Please check your connection and try again.
+            </Text>
+            <TouchableOpacity style={emptyStyles.retryBtn} onPress={onRetry} activeOpacity={0.8}>
+                <MaterialIcons name="refresh" size={18} color="#fff" />
+                <Text style={emptyStyles.retryText}>Try Again</Text>
+            </TouchableOpacity>
+        </View>
+    </SafeAreaView>
+)
+
+const emptyStyles = StyleSheet.create({
+    header: {
+        paddingHorizontal: 20,
+        paddingBottom: 12,
+        marginBottom: 4,
+        borderBottomWidth: 2,
+        borderBottomColor: '#E5E7EB',
+    },
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#111827',
+    },
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 40,
+    },
+    iconWrap: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: '#F1F5F9',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1E293B',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#64748B',
+        textAlign: 'center',
+        lineHeight: 22,
+        marginBottom: 28,
+    },
+    retryBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#2355B6',
+        paddingHorizontal: 28,
+        paddingVertical: 14,
+        borderRadius: 14,
+    },
+    retryText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+})
+
+// ─── Action Loading Modal (3 dash lines) ─────────────────────────────────────
+const ActionLoadingModal = ({
+    visible,
+    message = 'Processing...',
+}: {
+    visible: boolean
+    message?: string
+}) => {
+    const dash1 = useRef(new Animated.Value(0.3)).current
+    const dash2 = useRef(new Animated.Value(0.3)).current
+    const dash3 = useRef(new Animated.Value(0.3)).current
+
+    useEffect(() => {
+        if (!visible) return
+
+        const animate = (val: Animated.Value, delay: number) =>
+            Animated.loop(
+                Animated.sequence([
+                    Animated.delay(delay),
+                    Animated.timing(val, {
+                        toValue: 1,
+                        duration: 400,
+                        easing: Easing.ease,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(val, {
+                        toValue: 0.3,
+                        duration: 400,
+                        easing: Easing.ease,
+                        useNativeDriver: true,
+                    }),
+                ])
+            )
+
+        const a1 = animate(dash1, 0)
+        const a2 = animate(dash2, 180)
+        const a3 = animate(dash3, 360)
+
+        a1.start()
+        a2.start()
+        a3.start()
+
+        return () => {
+            a1.stop()
+            a2.stop()
+            a3.stop()
+            dash1.setValue(0.3)
+            dash2.setValue(0.3)
+            dash3.setValue(0.3)
+        }
+    }, [visible])
+
+    return (
+        <Modal transparent animationType="fade" visible={visible} statusBarTranslucent>
+            <View style={modalStyles.overlay}>
+                <View style={modalStyles.card}>
+                    {/* 3 animated dash lines */}
+                    <View style={modalStyles.dashRow}>
+                        {[dash1, dash2, dash3].map((anim, i) => (
+                            <Animated.View
+                                key={i}
+                                style={[
+                                    modalStyles.dash,
+                                    { opacity: anim },
+                                ]}
+                            />
+                        ))}
+                    </View>
+                    <Text style={modalStyles.message}>{message}</Text>
+                </View>
+            </View>
+        </Modal>
+    )
+}
+
+const modalStyles = StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        paddingHorizontal: 36,
+        paddingVertical: 28,
+        alignItems: 'center',
+        gap: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 10,
+        minWidth: 200,
+    },
+    dashRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+    },
+    dash: {
+        width: 48,
+        height: 6,
+        borderRadius: 99,
+        backgroundColor: '#2355B6',
+    },
+    message: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#475569',
+        textAlign: 'center',
+    },
+})
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const ProductDetails = () => {
     const navigation = useNavigation<NavigationProp<AuthStackParamList>>()
     const route = useRoute()
@@ -142,6 +503,10 @@ const ProductDetails = () => {
 
     const [compareData, setCompareData] = useState<CompareData | null>(null)
     const [compareLoading, setCompareLoading] = useState(false)
+
+    // Action lock: prevents View and Cart from conflicting
+    const [actionLocked, setActionLocked] = useState(false)
+    const [actionMessage, setActionMessage] = useState('Processing...')
 
     const fetchProductDetails = async () => {
         if (!productId) {
@@ -261,8 +626,9 @@ const ProductDetails = () => {
         }
     }
 
+    // ── Add to Cart — with action lock ────────────────────────────────────────
     const handleAddToCart = async () => {
-        if (isInCart) return
+        if (isInCart || actionLocked) return
 
         const token = await AsyncStorage.getItem('vToken')
         if (!token) {
@@ -275,6 +641,9 @@ const ProductDetails = () => {
             return
         }
 
+        // Lock actions & show modal
+        setActionLocked(true)
+        setActionMessage('Adding to cart...')
         setCartLoading(true)
 
         try {
@@ -292,11 +661,74 @@ const ProductDetails = () => {
 
             setIsInCart(true)
             toast.show({ message: 'Added to cart successfully', type: 'success', style: 'top' })
+
+            // fire purchase intent — don't await, non-blocking
+            axios
+                .post(
+                    `${API_BASE_URL}${TOTAL_SUMMERY_POST}${product?.slug}/record_purchase_intent/`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                )
+                .catch(() => {
+                    // silent — purchase intent failure should not affect UX
+                })
         } catch (error: any) {
             const msg: string = error?.response?.data?.message || ''
             toast.show({ message: msg || 'Failed to add to cart', type: 'error', style: 'top' })
         } finally {
             setCartLoading(false)
+            setActionLocked(false)
+        }
+    }
+
+    // ── View / Open URL — with action lock ────────────────────────────────────
+    const viewControll = async () => {
+        if (actionLocked) return
+
+        const token = await AsyncStorage.getItem('vToken')
+        if (!token) {
+            toast.show({ message: 'Token missing', type: 'error', style: 'top' })
+            return
+        }
+
+        // Lock actions & show modal
+        setActionLocked(true)
+        setActionMessage('Opening product page...')
+
+        try {
+            // fire purchase intent — non-blocking
+            axios
+                .post(
+                    `${API_BASE_URL}${TOTAL_SUMMERY_POST}${product?.slug}/record_purchase_intent/`,
+                    {},
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                )
+                .catch(() => { })
+
+            // open URL immediately — no need to await the API
+            if (mainListing?.external_url) {
+                const supported = await Linking.canOpenURL(mainListing.external_url)
+                if (supported) {
+                    await Linking.openURL(mainListing.external_url)
+                } else {
+                    toast.show({ message: 'Cannot open this URL', type: 'error', style: 'top' })
+                }
+            }
+        } finally {
+            // small delay so the modal doesn't flash
+            setTimeout(() => setActionLocked(false), 500)
         }
     }
 
@@ -327,48 +759,22 @@ const ProductDetails = () => {
 
     const isAvailable = mainListing?.is_available === true
 
-    const getListingAction = (item: ProductListing) => {
-        const hasUrl = !!item.external_url
-        return hasUrl ? 'view' : 'cart'
-    }
-
+    // ── Render: Skeleton ──────────────────────────────────────────────────────
     if (loading) {
-        return (
-            <SafeAreaView className="flex-1 bg-[#F9F9FB]">
-                <View className="px-5 pb-3 mb-4 border-b-2 border-[#E5E7EB]">
-                    <View className="flex-row items-center gap-4">
-                        <AppHeader left={() => <BackButton />} />
-                        <Text className="text-lg font-bold text-gray-900">Product Detail</Text>
-                    </View>
-                </View>
-
-                <View className="flex-1 items-center justify-center">
-                    <ActivityIndicator size="large" color="#2355B6" />
-                    <Text className="mt-3 text-[#636F85]">Loading product details...</Text>
-                </View>
-            </SafeAreaView>
-        )
+        return <ProductDetailsSkeleton />
     }
 
-    if (error) {
-        return (
-            <SafeAreaView className="flex-1 bg-[#F9F9FB]">
-                <View className="px-5 pb-3 mb-4 border-b-2 border-[#E5E7EB]">
-                    <View className="flex-row items-center gap-4">
-                        <AppHeader left={() => <BackButton />} />
-                        <Text className="text-lg font-bold text-gray-900">Product Detail</Text>
-                    </View>
-                </View>
-
-                <View className="flex-1 items-center justify-center px-5">
-                    <Text className="text-red-500 text-lg font-semibold">{error}</Text>
-                </View>
-            </SafeAreaView>
-        )
+    // ── Render: Empty / Error state ───────────────────────────────────────────
+    if (error || !product) {
+        return <EmptyState onRetry={fetchProductDetails} />
     }
-
+    console.log(mainListing?.external_url)
+    // ── Render: Main UI ───────────────────────────────────────────────────────
     return (
         <SafeAreaView className="flex-1 bg-[#F9F9FB]">
+            {/* Action conflict modal */}
+            <ActionLoadingModal visible={actionLocked} message={actionMessage} />
+
             <View className="px-5 pb-3 mb-4 border-b-2 border-[#E5E7EB]">
                 <View className="flex-row items-center gap-4">
                     <AppHeader left={() => <BackButton />} />
@@ -394,32 +800,43 @@ const ProductDetails = () => {
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 <Image
-                    style={{ width: '100%', height: 300 }}
+                    style={{ width: '100%', height: 250 }}
                     source={imageSource}
-                    resizeMode="cover"
+                    resizeMode="contain"
                 />
 
                 <View className="px-5">
-                    <View className="flex-row justify-between items-center mt-4">
-                        <View className="w-56">
+                    <View className="flex-row justify-between my-4">
+
                             <Text className="text-xl font-bold">
                                 {product?.title || 'No title found'}
                             </Text>
-                        </View>
 
-                        <View>
-                            <View className="items-center">
+                    </View>
+
+                    <View className='flex-row items-center justify-between'>
+                        <View className='gap-2'>
+                            <View className="items-center flex-row gap-2">
                                 <Entypo name="shop" size={20} color="#2355B6" />
-                                <Text className="text-xl text-[#2355B6] font-bold self-end">
+                                <Text className="text-xl text-[#2355B6] font-bold self-center">
                                     {product?.platform_name}
                                 </Text>
                             </View>
 
                             <View className="bg-[#27C8401A] p-2 rounded-full mt-2 flex-row items-center justify-center gap-2">
                                 <MaterialIcons name="verified" size={20} color="#137C0A" />
-                                <Text className="text-[#137C0A] font-medium">
+                                <Text className="text-[#137C0A] text-xl font-bold">
                                     {mainListing?.condition || 'N/A'}
                                 </Text>
+                            </View>
+                        </View>
+                        <View className='gap-2'>
+                            <View className='gap-2'>
+                                <Text className='text-xl font-bold self-center'> ⭐ {product?.rating}</Text>
+                            </View>
+                            <View className='flex-row items-center gap-2 self-center'>
+                                <MaterialIcons name="reviews" size={24} color="#2355B6" />
+                                <Text className='text-xl font-bold'>{product?.review_count}</Text>
                             </View>
                         </View>
                     </View>
@@ -432,7 +849,7 @@ const ProductDetails = () => {
 
                         <View className="flex-row items-end gap-2 my-2">
                             <Text className="text-4xl text-[#2355B6] font-bold">
-                                ${product?.lowest_price ?? mainListing?.price ?? '0.00'}
+                                ${product?.price ?? mainListing?.price ?? '0.00'}
                             </Text>
 
                             {!!mainListing?.original_price && Number(mainListing.original_price) > 0 && (
@@ -466,29 +883,43 @@ const ProductDetails = () => {
                                 />
                                 <Text className="text-[#636F85]">Share</Text>
                             </Pressable>
-
+                            {/* amar akahne akta issue suru hoice add to cart button disabled hoy ace ki karone janao */}
                             {mainListing?.external_url ? (
                                 <Pressable
-                                    onPress={() => openUrl(mainListing.external_url)}
-                                    className="rounded-xl p-6 flex-row items-center gap-2 ml-auto"
-                                    style={{ backgroundColor: '#2355B6' }}
+                                    onPress={viewControll}
+                                    disabled={actionLocked}
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: '#2355B6',
+                                        opacity: actionLocked ? 0.6 : 1,
+                                        borderRadius: 12,
+                                        paddingVertical: 16,
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'center', // ✅ centers content
+                                        gap: 8,
+                                    }}
+                                    className='py-7'
                                 >
-                                    <MaterialCommunityIcons
-                                        name="open-in-new"
-                                        size={26}
-                                        color="white"
-                                    />
-                                    <Text className="text-white text-2xl font-bold">View</Text>
+                                    <MaterialCommunityIcons name="open-in-new" size={26} color="white" />
+                                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold' }}>View</Text>
                                 </Pressable>
                             ) : (
                                 <Pressable
                                     onPress={handleAddToCart}
-                                    disabled={cartLoading || !isAvailable || isInCart}
-                                        className="rounded-xl p-6 flex-row items-center gap-2 ml-auto"
+                                        disabled={cartLoading || !isAvailable || isInCart || actionLocked}
                                         style={{
+                                            flex: 1,
                                             backgroundColor: isInCart ? '#16A34A' : '#2355B6',
-                                            opacity: cartLoading || !isAvailable ? 0.6 : 1,
+                                            opacity: cartLoading || !isAvailable || actionLocked ? 0.6 : 1,
+                                            borderRadius: 12,
+                                            paddingVertical: 16,
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'center', // ✅ centers content
+                                            gap: 8,
                                         }}
+                                        className='py-7'
                                     >
                                         {cartLoading ? (
                                             <ActivityIndicator size="small" color="white" />
@@ -499,12 +930,8 @@ const ProductDetails = () => {
                                                 color="white"
                                             />
                                         )}
-                                        <Text className="text-white text-2xl font-bold">
-                                            {cartLoading
-                                                ? 'Adding...'
-                                                : isInCart
-                                                    ? 'Already in Cart'
-                                                    : 'Add to Cart'}
+                                        <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }} >
+                                            {cartLoading ? 'Adding...' : isInCart ? 'In Cart' : 'Add to Cart'}
                                         </Text>
                                     </Pressable>
                             )}
@@ -550,9 +977,7 @@ const ProductDetails = () => {
                                                 />
                                                 <Text style={styles.savingsText}>
                                                     Save up to $
-                                                    {compareData.price_analysis.potential_savings.toFixed(
-                                                        2
-                                                    )}
+                                                    {compareData.price_analysis.potential_savings.toFixed(2)}
                                                 </Text>
                                                 </View>
                                             )}
@@ -598,7 +1023,7 @@ const ProductDetails = () => {
                                                                 <Image
                                                                     source={{ uri: item.main_image }}
                                                                     style={styles.compareImage}
-                                                                    resizeMode="cover"
+                                                                    resizeMode="stretch"
                                                                 />
                                                             ) : (
                                                                 <View style={styles.compareImageFallback}>
@@ -658,10 +1083,15 @@ const ProductDetails = () => {
                             )}
                         </>
                     )}
-
-                    {/* ok */}
                 </View>
             </ScrollView>
+
+            <Pressable
+                onPress={() => setChatModalVisible(true)}
+                className='absolute right-12 bottom-10 bg-white p-2 rounded-full border-2 border-[#FFC64933]'
+            >
+                <Ionicons name="chatbubble-ellipses" size={40} color="#FFC649" />
+            </Pressable>
 
             <ChatModal
                 visible={chatModalVisible}
@@ -691,7 +1121,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-
     savingsBanner: {
         backgroundColor: '#ECFDF3',
         borderWidth: 1,
@@ -710,7 +1139,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         flex: 1,
     },
-
     compareCard: {
         width: 170,
         backgroundColor: '#FFFFFF',
@@ -795,7 +1223,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-
     listingCard: {
         backgroundColor: '#fff',
         borderRadius: 18,

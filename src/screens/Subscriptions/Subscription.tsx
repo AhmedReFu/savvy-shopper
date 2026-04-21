@@ -364,8 +364,8 @@ const styles = StyleSheet.create({
     planTitle: { fontSize: 18, fontWeight: "500", color: "#111827" },
     activePill: { backgroundColor: "#DCFCE7", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999 },
     activeText: { color: "#15803D", fontWeight: "900", fontSize: 14 },
-    priceBig: { fontSize: 20, fontWeight: "900", color: "#2D2D2D", marginTop: 12 },
-    currentPlanBtn: { backgroundColor: "#F1F5F9", borderRadius: 14, paddingVertical: 16, alignItems: "center", marginTop: 18 },
+    priceBig: { fontSize: 20, fontWeight: "900", color: "#2D2D2D", marginTop: 6 },
+    currentPlanBtn: { backgroundColor: "#F1F5F9", borderRadius: 14, paddingVertical: 16, alignItems: "center", marginTop: 6 },
     currentPlanText: { fontSize: 16, fontWeight: "800", color: "#64748B" },
 
     proCard: {
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     brandGold: { fontSize: 18, fontWeight: "900", color: "#FBBF24", letterSpacing: 1 },
     brandDark: { fontSize: 18, fontWeight: "900", color: "#111827", letterSpacing: 1 },
 
-    proPrice: { fontSize: 26, fontWeight: "900", color: "#2D2D2D", marginBottom: 18 },
+    proPrice: { fontSize: 26, fontWeight: "900", color: "#2D2D2D", marginBottom: 8 },
     upgradeBtn: {
         backgroundColor: "#1D4ED8",
         paddingVertical: 20,

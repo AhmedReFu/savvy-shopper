@@ -1,6 +1,5 @@
 import { IPA_BASE, PROFILE } from "@env";
 import {
-    AntDesign,
     Entypo,
     Feather,
     FontAwesome5,
@@ -12,8 +11,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
-import { Image, Linking, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Image, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AuthStackParamList } from "../../Navigation/types";
 import { Toast, useToast } from "../../components/useToost";
@@ -226,6 +226,31 @@ const Profile = () => {
                     <Text className="text-lg text-center mt-1 text-[#636F85] font-semibold">
                         {user?.email}
                     </Text>
+                    
+                        <LinearGradient
+                        style={styles.balanceCard}
+                        colors={['#0057FF', '#61B3FF']}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                            className="mt-4 rounded-[28px] px-5 py-5 items-center justify-center"
+                            
+                        >
+                            <Text className="text-[28px] font-bold text-white">
+                                ${Number(user?.balance || 0.00).toFixed(2)}
+                            </Text>
+                            <Text className="text-[14px] text-white mt-1 font-medium">
+                                USD Balance
+                            </Text>
+                    </LinearGradient>
+                   
+                    {/* style={{
+                                backgroundColor: '#CDEFD4',
+                                shadowColor: '#000',
+                                shadowOpacity: 0.06,
+                                shadowRadius: 10,
+                                shadowOffset: { width: 0, height: 4 },
+                                elevation: 3,
+                            }} */}
 
                     {/* Quick actions */}
                     <View className="flex-row gap-4 mt-6">
@@ -261,7 +286,7 @@ const Profile = () => {
                     {/* Shop Create and Manage */}
                     <Card className="mt-5 px-4">
                         <RowItem
-                            title="Shop"
+                            title={user?.seller_status.status == "approved" ? "Seller dashboard": "Become a seller" }
                             leftIcon={
                                 <Entypo name="shop" size={16} color="#2355B6" />
                             }
@@ -314,13 +339,13 @@ const Profile = () => {
                     {/* Settings */}
                     <Card className="mt-5 px-4 pt-4">
                         <Text className="text-lg font-bold text-[#2D2D2D] mb-2">Settings</Text>
-
+{/* 
                         <RowItem
                             title="Notifications"
                             leftIcon={<Ionicons name="notifications-outline" size={16} color="#636F85" />}
                             onPress={() => navigation.navigate("NotificationSettings")}
                         />
-                        <Divider />
+                        <Divider /> */}
 
                         <RowItem
                             title="Change Password"
@@ -452,3 +477,16 @@ const Profile = () => {
 };
 
 export default Profile;
+
+const styles = StyleSheet.create({
+    balanceCard: {
+        borderRadius: 28,
+        paddingVertical: 40,
+        paddingHorizontal: 24,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 0,
+    },
+})

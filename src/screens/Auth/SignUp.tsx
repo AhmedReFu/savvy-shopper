@@ -34,7 +34,6 @@ const SignUp = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -52,7 +51,6 @@ const SignUp = () => {
             Alert.alert('Error', err);
             return;
         }
-
         try {
             setLoading(true);
             const res = await axios.post(
@@ -62,18 +60,11 @@ const SignUp = () => {
                     email: email.trim().toLowerCase(),
                     password,
                 },
-                {
-                    headers: { 'Content-Type': 'application/json' },
-                    timeout: 15000,
-                },
+                { headers: { 'Content-Type': 'application/json' }, timeout: 15000 },
             );
-
             const data = res.data;
             Alert.alert('Success', data?.message ?? 'Account created');
-
-            navigation.navigate('OtpAuth', {
-                email: email.trim().toLowerCase(),
-            } as any);
+            navigation.navigate('OtpAuth', { email: email.trim().toLowerCase() } as any);
         } catch (e: any) {
             const msg = e?.response?.data?.message || e?.message || 'Something went wrong';
             Alert.alert('Sign up failed', msg);
@@ -83,11 +74,13 @@ const SignUp = () => {
     };
 
     return (
-        <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
+        // ✅ FIX 1: 'bottom' edge added
+        <SafeAreaView edges={['top', 'left', 'right', 'bottom']} style={styles.safe}>
+            {/* ✅ FIX 2: 'height' for Android, 'padding' for iOS */}
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
                 <View style={styles.page}>
                     <View style={styles.logoContainer}>
@@ -98,6 +91,7 @@ const SignUp = () => {
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         contentContainerStyle={styles.scrollContent}
+                        bounces={false}
                     >
                         <Text style={styles.title}>Sign up</Text>
                         <Text style={styles.subTitle}>Welcome, let's get you signed up.</Text>
@@ -159,7 +153,11 @@ const SignUp = () => {
                             onPress={handleSignUp}
                             activeOpacity={0.9}
                         >
-                            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.mainButtonText}>Sign Up</Text>}
+                            {loading ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.mainButtonText}>Sign Up</Text>
+                            )}
                         </TouchableOpacity>
 
                         <View style={styles.dividerContainer}>
@@ -168,18 +166,11 @@ const SignUp = () => {
                             <View style={styles.divider} />
                         </View>
 
-                        <View className='flex-row justify-center gap-4'>
-                            <TouchableOpacity
-                                className='bg-white border border-gray-200 rounded-2xl px-6 py-4 flex-row items-center justify-center flex-1'
-                                activeOpacity={0.8}
-                            >
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
                                 <GoogleButtonSvg />
-
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                className='bg-white border border-gray-200 rounded-2xl px-6 py-4 flex-row items-center justify-center flex-1'
-                                activeOpacity={0.8}
-                            >
+                            <TouchableOpacity style={styles.socialBtn} activeOpacity={0.8}>
                                 <AppleButtonSvg />
                             </TouchableOpacity>
                         </View>
@@ -209,18 +200,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     scrollContent: {
-        paddingBottom: 40, // ✅ iOS bottom safe scroll
+        paddingBottom: 40,
+        flexGrow: 1,
     },
-
     logoContainer: {
         alignItems: 'center',
         paddingTop: height * 0.02,
     },
     logoImage: {
         width: width * 0.6,
-        height: height * 0.2,
+        height: height * 0.15, // ✅ slightly reduced for more form space
     },
-
     title: {
         fontSize: 30,
         fontWeight: '800',
@@ -231,7 +221,6 @@ const styles = StyleSheet.create({
         color: '#636F85',
         marginVertical: 8,
     },
-
     label: {
         fontSize: 16,
         fontWeight: '600',
@@ -239,12 +228,11 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         marginTop: 16,
     },
-
     inputRow: {
         backgroundColor: '#F5F5F5',
         borderRadius: 12,
         paddingHorizontal: 16,
-        paddingVertical: Platform.OS === 'ios' ? 14 : 10, // ✅ iOS fix
+        paddingVertical: Platform.OS === 'ios' ? 14 : 12,
         flexDirection: 'row',
         alignItems: 'center',
     },
@@ -258,10 +246,9 @@ const styles = StyleSheet.create({
     textInput: {
         flex: 1,
         fontSize: 18,
-        paddingVertical: Platform.OS === 'ios' ? 0 : 2, // ✅ iOS baseline fix
+        paddingVertical: Platform.OS === 'ios' ? 0 : 2,
         color: '#111827',
     },
-
     mainButton: {
         backgroundColor: '#2355B6',
         borderRadius: 12,
@@ -274,7 +261,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#FFFFFF',
     },
-
     dividerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -290,23 +276,29 @@ const styles = StyleSheet.create({
         color: '#666666',
         marginHorizontal: 16,
     },
-
     socialRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 8,
+        justifyContent: 'center',
+        gap: 16,
     },
     socialBtn: {
-        height: 64,
-        width: (width - 40 - 12) / 2,
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 16,
+        paddingHorizontal: 24,
+        paddingVertical: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-
     bottomRow: {
         flexDirection: 'row',
         justifyContent: 'center',
         flexWrap: 'wrap',
         marginTop: 20,
-        marginBottom: 30,
+        marginBottom: 16,
     },
     bottomText: {
         fontSize: 18,
